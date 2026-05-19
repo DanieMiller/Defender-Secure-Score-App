@@ -5,7 +5,7 @@
   "main": "src/functions/*.js",
   "scripts": {
     "start": "func start",
-    "test": "echo \"No tests\""
+    "build": "echo no build needed"
   },
   "dependencies": {
     "@azure/functions": "^4.5.0",
