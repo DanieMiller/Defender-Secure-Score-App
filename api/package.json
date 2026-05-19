@@ -1,14 +1,7 @@
 {
   "name": "securescore-api",
   "version": "1.0.0",
-  "scripts": {
-    "start": "func start"
-  },
   "dependencies": {
-    "@azure/functions": "^4.5.0",
     "@google/generative-ai": "^0.24.0"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }
