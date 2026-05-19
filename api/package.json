@@ -1,0 +1,9 @@
+{
+  "name": "securescore-api",
+  "version": "1.0.0",
+  "description": "Azure Functions API for Secure Score Ops",
+  "type": "module",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0"
+  }
+}

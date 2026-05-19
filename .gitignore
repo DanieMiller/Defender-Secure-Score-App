@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+api/node_modules/
+
+# Build output
+frontend/dist/
+
+# Environment files (NEVER commit these)
+.env
+api/.env
+backend/.env
+*.env.local
+
+# Azure
+.azure/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
