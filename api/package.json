@@ -11,9 +11,6 @@
     "@azure/functions": "^4.5.0",
     "@google/generative-ai": "^0.24.0"
   },
-  "devDependencies": {
-    "azure-functions-core-tools": "^4.x"
-  },
   "engines": {
     "node": ">=20"
   }
