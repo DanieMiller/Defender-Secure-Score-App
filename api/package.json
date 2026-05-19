@@ -1,11 +1,10 @@
 {
   "name": "securescore-api",
   "version": "1.0.0",
-  "description": "Azure Functions API for Secure Score Ops",
-  "main": "src/functions/*.js",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
-    "start": "func start",
-    "build": "echo no build needed"
+    "start": "func start"
   },
   "dependencies": {
     "@azure/functions": "^4.5.0",
