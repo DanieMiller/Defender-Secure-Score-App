@@ -1,11 +1,8 @@
 {
   "name": "securescore-ops",
-  "version": "2.0.0",
-  "description": "Defender Secure Score Assistant — Azure Static Web App",
-  "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "dev": "swa start frontend --api-location api --run \"cd frontend && npm run dev\"",
     "build": "cd frontend && npm install && npm run build",
-    "install:all": "cd frontend && npm install && cd ../api && npm install"
+    "vercel-build": "cd frontend && npm install && npm run build"
   }
 }
