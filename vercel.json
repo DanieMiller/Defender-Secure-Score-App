@@ -1,36 +1,11 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    },
-    {
-      "src": "api/*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/health",
-      "dest": "/api/health.js"
-    },
-    {
-      "src": "/api/generate",
-      "dest": "/api/generate.js",
-      "methods": ["POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/script",
-      "dest": "/api/script.js",
-      "methods": ["POST", "OPTIONS"]
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/dist/$1"
-    }
+  "outputDirectory": "frontend/dist",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/health.js" },
+    { "source": "/api/generate", "destination": "/api/generate.js" },
+    { "source": "/api/script", "destination": "/api/script.js" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
