@@ -1,9 +1,7 @@
-import { app } from '@azure/functions';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const { app } = require('@azure/functions');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -40,8 +38,8 @@ async function callGemini(prompt, systemPrompt) {
         const result = await model.generateContent(prompt);
         return repairJSON(result.response.text());
       } catch (err) {
-        const is429 = err.message?.includes('429') || err.message?.includes('quota') || err.message?.includes('Too Many');
-        const is404 = err.message?.includes('404') || err.message?.includes('not found');
+        const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('Too Many'));
+        const is404 = err.message && (err.message.includes('404') || err.message.includes('not found'));
         if (is404) break;
         if (is429 && attempt < 3) { await sleep(attempt * 15000); continue; }
         if (is429 && attempt === 3) break;
@@ -52,9 +50,9 @@ async function callGemini(prompt, systemPrompt) {
   throw new Error('Rate limit reached. Please wait 1 minute and try again.');
 }
 
-function jsonRes(data, status = 200) {
+function jsonRes(data, status) {
   return {
-    status,
+    status: status || 200,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -64,8 +62,6 @@ function jsonRes(data, status = 200) {
     body: JSON.stringify(data),
   };
 }
-
-// ── System prompts ─────────────────────────────────────────────────────────
 
 const GUIDE_SYSTEM = `You are a Microsoft security expert specializing in Defender for Endpoint Secure Score remediation. You help administrators implement security recommendations using Intune, Group Policy, Entra ID, and PowerShell.
 
@@ -99,7 +95,7 @@ Respond ONLY with raw JSON, no markdown, no code fences:
     "setting_name": "exact GPO setting name",
     "value": "Enabled|Disabled|value",
     "admx": "ADMX file or null",
-    "registry_key": "HKLM\\path or null",
+    "registry_key": "HKLM\\\\path or null",
     "registry_value": "value name or null",
     "registry_data": "data and type or null"
   },
@@ -148,29 +144,31 @@ Respond ONLY with raw JSON, no markdown, no code fences:
 }
 Rules: production-safe, error handling, exit 0/1 for detection, under 40 lines each. CRITICAL: complete valid JSON only.`;
 
-// ── Functions ──────────────────────────────────────────────────────────────
-
 app.http('health', {
   methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
-  handler: async () => jsonRes({ ok: true, ts: new Date().toISOString(), runtime: 'azure-functions-v4' }),
+  handler: async function() {
+    return jsonRes({ ok: true, ts: new Date().toISOString(), runtime: 'azure-functions-v4-cjs' });
+  },
 });
 
 app.http('generate', {
   methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
-  handler: async (request, context) => {
-    if (request.method === 'OPTIONS') return { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } };
-    let body;
-    try { body = await request.json(); } catch { return jsonRes({ error: 'Invalid JSON body' }, 400); }
-    const { query } = body;
-    if (!query?.trim()) return jsonRes({ error: 'query is required' }, 400);
+  handler: async function(request, context) {
+    if (request.method === 'OPTIONS') {
+      return { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } };
+    }
+    var body;
+    try { body = await request.json(); } catch(e) { return jsonRes({ error: 'Invalid JSON body' }, 400); }
+    var query = body.query;
+    if (!query || !query.trim()) return jsonRes({ error: 'query is required' }, 400);
     try {
-      const prompt = `Generate a comprehensive but concise implementation guide for this Microsoft Defender Secure Score recommendation: "${query.trim()}"\nInclude exact Intune paths, GPO paths, registry mappings, Entra ID steps if identity-related, PowerShell scripts, and real Microsoft Learn URLs.\nIMPORTANT: Return complete valid JSON only. Do not truncate.`;
-      const result = await callGemini(prompt, GUIDE_SYSTEM);
-      return jsonRes({ ok: true, result });
-    } catch (err) {
-      context.log('Generate error:', err.message);
+      var prompt = 'Generate a comprehensive but concise implementation guide for this Microsoft Defender Secure Score recommendation: "' + query.trim() + '"\nInclude exact Intune paths, GPO paths, registry mappings, Entra ID steps if identity-related, PowerShell scripts, and real Microsoft Learn URLs.\nIMPORTANT: Return complete valid JSON only. Do not truncate.';
+      var result = await callGemini(prompt, GUIDE_SYSTEM);
+      return jsonRes({ ok: true, result: result });
+    } catch(err) {
+      context.log('Generate error: ' + err.message);
       return jsonRes({ error: err.message || 'Internal server error' }, 500);
     }
   },
@@ -179,18 +177,20 @@ app.http('generate', {
 app.http('script', {
   methods: ['POST', 'OPTIONS'],
   authLevel: 'anonymous',
-  handler: async (request, context) => {
-    if (request.method === 'OPTIONS') return { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } };
-    let body;
-    try { body = await request.json(); } catch { return jsonRes({ error: 'Invalid JSON body' }, 400); }
-    const { request: userRequest } = body;
-    if (!userRequest?.trim()) return jsonRes({ error: 'request is required' }, 400);
+  handler: async function(request, context) {
+    if (request.method === 'OPTIONS') {
+      return { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } };
+    }
+    var body;
+    try { body = await request.json(); } catch(e) { return jsonRes({ error: 'Invalid JSON body' }, 400); }
+    var userRequest = body.request;
+    if (!userRequest || !userRequest.trim()) return jsonRes({ error: 'request is required' }, 400);
     try {
-      const prompt = `Generate detection and remediation PowerShell scripts for: "${userRequest.trim()}"\nInclude: detection (exit 0/1), remediation, validation, rollback scripts.\nIMPORTANT: Return complete valid JSON only.`;
-      const result = await callGemini(prompt, SCRIPT_SYSTEM);
-      return jsonRes({ ok: true, result });
-    } catch (err) {
-      context.log('Script error:', err.message);
+      var prompt = 'Generate detection and remediation PowerShell scripts for: "' + userRequest.trim() + '"\nInclude: detection (exit 0/1), remediation, validation, rollback scripts.\nIMPORTANT: Return complete valid JSON only.';
+      var result = await callGemini(prompt, SCRIPT_SYSTEM);
+      return jsonRes({ ok: true, result: result });
+    } catch(err) {
+      context.log('Script error: ' + err.message);
       return jsonRes({ error: err.message || 'Internal server error' }, 500);
     }
   },
