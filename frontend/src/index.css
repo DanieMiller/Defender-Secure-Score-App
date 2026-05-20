@@ -3,32 +3,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── BUI Brand Colours ──────────────────────────────────────────────────────
-   Primary red:   #E3001B  (BUI signature red)
-   Dark navy:     #0A0F1E  (deep background)
-   Mid navy:      #111827
-   Light grey bg: #F5F6F8  (light mode background)
-   Text dark:     #0D1117
+/* ── BUI Brand Colours (from intranet screenshot) ───────────────────────────
+   Primary amber/gold: #F5A000
+   Dark header/nav:    #1E2028  (charcoal)
+   Card backgrounds:   #252830
+   Light mode bg:      #F5F5F5
 */
 
 /* ── Dark mode (default) ── */
 :root {
-  --bg:        #0A0F1E;
-  --bg2:       #111827;
-  --bg3:       #1C2333;
-  --bg4:       #253047;
-  --border:    rgba(227,0,27,0.15);
-  --border2:   rgba(227,0,27,0.35);
-  --acc:       #E3001B;
-  --acc2:      #FF1F38;
-  --acc3:      #FF6678;
-  --text:      #F3F4F6;
-  --text2:     #9CA3AF;
-  --text3:     #4B5563;
-  --card-bg:   #111827;
-  --header-bg: #0D1422;
-  --input-bg:  #1C2333;
-  --code-bg:   #070B14;
+  --bg:        #16181E;
+  --bg2:       #1E2028;
+  --bg3:       #252830;
+  --bg4:       #2E3240;
+  --border:    rgba(245,160,0,0.2);
+  --border2:   rgba(245,160,0,0.4);
+  --acc:       #F5A000;
+  --acc2:      #F5A000;
+  --acc3:      #FFC84A;
+  --text:      #F0F0F0;
+  --text2:     #A0A8B8;
+  --text3:     #505870;
+  --card-bg:   #1E2028;
+  --header-bg: #1A1C24;
+  --input-bg:  #252830;
+  --code-bg:   #0E1016;
   --success:   #10B981;
   --warning:   #F59E0B;
   --danger:    #EF4444;
@@ -36,22 +35,22 @@
 
 /* ── Light mode ── */
 .light {
-  --bg:        #F5F6F8;
+  --bg:        #F4F5F7;
   --bg2:       #FFFFFF;
-  --bg3:       #EEF0F4;
-  --bg4:       #E2E5EC;
-  --border:    rgba(227,0,27,0.15);
-  --border2:   rgba(227,0,27,0.35);
-  --acc:       #E3001B;
-  --acc2:      #C4001A;
-  --acc3:      #9A0014;
-  --text:      #0D1117;
-  --text2:     #374151;
+  --bg3:       #ECEDF0;
+  --bg4:       #E0E2E8;
+  --border:    rgba(245,160,0,0.2);
+  --border2:   rgba(245,160,0,0.45);
+  --acc:       #F5A000;
+  --acc2:      #D98C00;
+  --acc3:      #B87300;
+  --text:      #111318;
+  --text2:     #3D4452;
   --text3:     #9CA3AF;
   --card-bg:   #FFFFFF;
-  --header-bg: #FFFFFF;
-  --input-bg:  #F5F6F8;
-  --code-bg:   #0D1117;
+  --header-bg: #1A1C24;
+  --input-bg:  #F4F5F7;
+  --code-bg:   #111318;
   --success:   #059669;
   --warning:   #D97706;
   --danger:    #DC2626;

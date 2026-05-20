@@ -56,66 +56,71 @@ export default function App() {
 
   const handleEmailTemplate = useCallback(() => setTab('email'), []);
 
-  const PAGE_TITLES: Partial<Record<Tab, { title: string; sub: string }>> = {
+  const PAGE_META: Partial<Record<Tab, { title: string; sub: string }>> = {
     generate: {
-      title: 'Defender Secure Score Implementation Assistant',
-      sub: 'Generate Intune, GPO, Entra ID and PowerShell guides for any Defender Secure Score recommendation.',
+      title: 'Secure Score Implementation Assistant',
+      sub: 'Generate Intune, GPO, Entra ID and PowerShell implementation guides for any Microsoft Defender Secure Score recommendation.',
     },
     scripts: {
       title: 'Endpoint Script Builder',
-      sub: 'Describe any task in plain English — get Intune-ready detection, remediation, validation and rollback scripts instantly.',
+      sub: 'Describe any endpoint management task in plain English — get Intune-ready detection, remediation, validation and rollback scripts.',
     },
     email: {
       title: 'Email Template Generator',
-      sub: 'Generate a professional client email with implementation steps ready to send.',
+      sub: 'Generate a professional implementation email with step-by-step instructions ready to send to your client.',
     },
   };
 
-  const pageInfo = PAGE_TITLES[tab];
+  const pageMeta = PAGE_META[tab];
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
 
-      {/* ── Header ── */}
-      <header style={{ background: 'var(--header-bg)', borderBottom: '1px solid var(--border)' }}
+      {/* ── Header — matches BUI intranet: dark charcoal bg, amber accents ── */}
+      <header style={{ background: '#1A1C24', borderBottom: '2px solid #F5A000' }}
         className="sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4">
-          <div className="flex items-center gap-6 py-3">
+          <div className="flex items-center gap-4 py-2.5">
 
-            {/* BUI Logo */}
+            {/* BUI Logo - exact match to screenshot */}
             <a href="https://www.bui.co" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 flex-shrink-0 group">
-              <BUILogo
-                className="h-7 w-auto transition-opacity group-hover:opacity-80"
-                style={{ color: 'var(--text)' } as React.CSSProperties}
-              />
-              <div className="h-5 w-px" style={{ background: 'var(--border2)' }} />
+              <BUILogo />
+              {/* Vertical divider */}
+              <div className="h-8 w-px mx-1" style={{ background: 'rgba(245,160,0,0.3)' }} />
+              {/* App name */}
               <div>
-                <div className="text-xs font-semibold tracking-wider leading-none"
-                  style={{ color: 'var(--text2)' }}>
+                <div className="text-sm font-bold tracking-wide leading-none text-white">
                   SECURE SCORE OPS
+                </div>
+                <div className="text-[10px] tracking-wider leading-none mt-0.5"
+                  style={{ color: '#F5A000' }}>
+                  DEFENDER REMEDIATION ASSISTANT
                 </div>
               </div>
             </a>
 
-            {/* Nav */}
-            <nav className="flex gap-1 ml-auto flex-wrap">
+            {/* Nav tabs - matches intranet style */}
+            <nav className="flex gap-1 ml-auto flex-wrap items-center">
               {TABS.map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
-                  className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors tracking-wide"
+                  className="text-xs px-3 py-2 rounded font-medium transition-all tracking-wide"
                   style={tab === t.id
-                    ? { background: 'var(--acc)', color: 'white' }
-                    : { color: 'var(--text2)', background: 'transparent' }}>
+                    ? { background: '#F5A000', color: '#1A1C24', fontWeight: 600 }
+                    : { color: '#A0A8B8', background: 'transparent' }}
+                  onMouseEnter={e => { if (tab !== t.id) (e.target as HTMLElement).style.color = '#F5A000'; }}
+                  onMouseLeave={e => { if (tab !== t.id) (e.target as HTMLElement).style.color = '#A0A8B8'; }}
+                >
                   {t.label}
                   {t.id === 'history' && history.items.length > 0 && (
                     <span className="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'var(--bg4)', color: 'var(--text2)' }}>
+                      style={{ background: 'rgba(245,160,0,0.2)', color: '#F5A000' }}>
                       {history.items.length}
                     </span>
                   )}
                   {t.id === 'favorites' && favorites.items.length > 0 && (
                     <span className="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+                      style={{ background: 'rgba(245,160,0,0.2)', color: '#F5A000' }}>
                       {favorites.items.length}
                     </span>
                   )}
@@ -124,32 +129,34 @@ export default function App() {
 
               {/* Theme toggle */}
               <button onClick={toggle}
-                className="ml-1 w-8 h-8 rounded-md flex items-center justify-center transition-colors"
-                style={{ border: '1px solid var(--border)', color: 'var(--text2)' }}
+                className="ml-1 w-8 h-8 rounded flex items-center justify-center transition-colors"
+                style={{ border: '1px solid rgba(245,160,0,0.3)', color: '#A0A8B8' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#F5A000')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#A0A8B8')}
                 title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
                 {dark ? <Sun size={14} /> : <Moon size={14} />}
               </button>
             </nav>
           </div>
         </div>
-
-        {/* Red accent line under header */}
-        <div className="h-0.5 w-full" style={{ background: 'var(--acc)' }} />
       </header>
 
       {/* ── Page hero ── */}
-      {pageInfo && (
+      {pageMeta && (
         <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-          <div className="max-w-5xl mx-auto px-4 py-8">
+          <div className="max-w-5xl mx-auto px-4 py-7">
             <div className="flex items-start gap-4">
-              {/* BUI red vertical accent bar */}
-              <div className="w-1 h-12 rounded-full flex-shrink-0 mt-1" style={{ background: 'var(--acc)' }} />
+              {/* BUI amber accent bar */}
+              <div className="w-1 h-10 rounded-full flex-shrink-0 mt-1"
+                style={{ background: '#F5A000' }} />
               <div>
-                <h1 className="text-2xl font-bold tracking-tight mb-1.5" style={{ color: 'var(--text)' }}>
-                  {pageInfo.title}
+                <h1 className="text-xl font-bold tracking-tight mb-1"
+                  style={{ color: 'var(--text)' }}>
+                  {pageMeta.title}
                 </h1>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)', maxWidth: '560px' }}>
-                  {pageInfo.sub}
+                <p className="text-sm leading-relaxed"
+                  style={{ color: 'var(--text2)', maxWidth: '560px' }}>
+                  {pageMeta.sub}
                 </p>
               </div>
             </div>
@@ -176,17 +183,17 @@ export default function App() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="mt-8 py-6" style={{ borderTop: '1px solid var(--border)' }}>
+      <footer className="mt-8 py-5" style={{ background: '#1A1C24', borderTop: '2px solid #F5A000' }}>
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <BUILogo className="h-5 w-auto" style={{ color: 'var(--text3)' } as React.CSSProperties} />
-            <span className="text-xs" style={{ color: 'var(--text3)' }}>
-              Secure Score Ops — powered by BUI
+            <BUILogo compact />
+            <span className="text-xs" style={{ color: '#A0A8B8' }}>
+              Secure Score Ops — Internal BUI Tool
             </span>
           </div>
           <a href="https://www.bui.co" target="_blank" rel="noopener noreferrer"
             className="text-xs transition-colors hover:underline"
-            style={{ color: 'var(--acc)' }}>
+            style={{ color: '#F5A000' }}>
             www.bui.co
           </a>
         </div>
