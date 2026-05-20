@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 /* ── BUI Brand Colours (from intranet screenshot) ───────────────────────────
-   Primary amber/gold: #F5A000
+   Primary amber/gold: #d9861c
    Dark header/nav:    #1E2028  (charcoal)
    Card backgrounds:   #252830
    Light mode bg:      #F5F5F5
@@ -16,11 +16,11 @@
   --bg2:       #1E2028;
   --bg3:       #252830;
   --bg4:       #2E3240;
-  --border:    rgba(245,160,0,0.2);
-  --border2:   rgba(245,160,0,0.4);
-  --acc:       #F5A000;
-  --acc2:      #F5A000;
-  --acc3:      #FFC84A;
+  --border:    rgba(217,134,28,0.2);
+  --border2:   rgba(217,134,28,0.4);
+  --acc:       #d9861c;
+  --acc2:      #d9861c;
+  --acc3:      #e89b30;
   --text:      #F0F0F0;
   --text2:     #A0A8B8;
   --text3:     #505870;
@@ -39,9 +39,9 @@
   --bg2:       #FFFFFF;
   --bg3:       #ECEDF0;
   --bg4:       #E0E2E8;
-  --border:    rgba(245,160,0,0.2);
-  --border2:   rgba(245,160,0,0.45);
-  --acc:       #F5A000;
+  --border:    rgba(217,134,28,0.2);
+  --border2:   rgba(217,134,28,0.45);
+  --acc:       #d9861c;
   --acc2:      #D98C00;
   --acc3:      #B87300;
   --text:      #111318;

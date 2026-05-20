@@ -77,7 +77,7 @@ export default function App() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
 
       {/* ── Header — matches BUI intranet: dark charcoal bg, amber accents ── */}
-      <header style={{ background: '#1A1C24', borderBottom: '2px solid #F5A000' }}
+      <header style={{ background: '#1A1C24', borderBottom: '2px solid #d9861c' }}
         className="sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex items-center gap-4 py-2.5">
@@ -87,14 +87,14 @@ export default function App() {
               className="flex items-center gap-3 flex-shrink-0 group">
               <BUILogo />
               {/* Vertical divider */}
-              <div className="h-8 w-px mx-1" style={{ background: 'rgba(245,160,0,0.3)' }} />
+              <div className="h-8 w-px mx-1" style={{ background: 'rgba(217,134,28,0.3)' }} />
               {/* App name */}
               <div>
                 <div className="text-sm font-bold tracking-wide leading-none text-white">
                   SECURE SCORE OPS
                 </div>
                 <div className="text-[10px] tracking-wider leading-none mt-0.5"
-                  style={{ color: '#F5A000' }}>
+                  style={{ color: '#d9861c' }}>
                   DEFENDER REMEDIATION ASSISTANT
                 </div>
               </div>
@@ -106,21 +106,21 @@ export default function App() {
                 <button key={t.id} onClick={() => setTab(t.id)}
                   className="text-xs px-3 py-2 rounded font-medium transition-all tracking-wide"
                   style={tab === t.id
-                    ? { background: '#F5A000', color: '#1A1C24', fontWeight: 600 }
+                    ? { background: '#d9861c', color: '#1A1C24', fontWeight: 600 }
                     : { color: '#A0A8B8', background: 'transparent' }}
-                  onMouseEnter={e => { if (tab !== t.id) (e.target as HTMLElement).style.color = '#F5A000'; }}
+                  onMouseEnter={e => { if (tab !== t.id) (e.target as HTMLElement).style.color = '#d9861c'; }}
                   onMouseLeave={e => { if (tab !== t.id) (e.target as HTMLElement).style.color = '#A0A8B8'; }}
                 >
                   {t.label}
                   {t.id === 'history' && history.items.length > 0 && (
                     <span className="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'rgba(245,160,0,0.2)', color: '#F5A000' }}>
+                      style={{ background: 'rgba(217,134,28,0.2)', color: '#d9861c' }}>
                       {history.items.length}
                     </span>
                   )}
                   {t.id === 'favorites' && favorites.items.length > 0 && (
                     <span className="ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'rgba(245,160,0,0.2)', color: '#F5A000' }}>
+                      style={{ background: 'rgba(217,134,28,0.2)', color: '#d9861c' }}>
                       {favorites.items.length}
                     </span>
                   )}
@@ -130,8 +130,8 @@ export default function App() {
               {/* Theme toggle */}
               <button onClick={toggle}
                 className="ml-1 w-8 h-8 rounded flex items-center justify-center transition-colors"
-                style={{ border: '1px solid rgba(245,160,0,0.3)', color: '#A0A8B8' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#F5A000')}
+                style={{ border: '1px solid rgba(217,134,28,0.3)', color: '#A0A8B8' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#d9861c')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#A0A8B8')}
                 title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
                 {dark ? <Sun size={14} /> : <Moon size={14} />}
@@ -148,7 +148,7 @@ export default function App() {
             <div className="flex items-start gap-4">
               {/* BUI amber accent bar */}
               <div className="w-1 h-10 rounded-full flex-shrink-0 mt-1"
-                style={{ background: '#F5A000' }} />
+                style={{ background: '#d9861c' }} />
               <div>
                 <h1 className="text-xl font-bold tracking-tight mb-1"
                   style={{ color: 'var(--text)' }}>
@@ -183,7 +183,7 @@ export default function App() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="mt-8 py-5" style={{ background: '#1A1C24', borderTop: '2px solid #F5A000' }}>
+      <footer className="mt-8 py-5" style={{ background: '#1A1C24', borderTop: '2px solid #d9861c' }}>
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <BUILogo compact />
@@ -193,7 +193,7 @@ export default function App() {
           </div>
           <a href="https://www.bui.co" target="_blank" rel="noopener noreferrer"
             className="text-xs transition-colors hover:underline"
-            style={{ color: '#F5A000' }}>
+            style={{ color: '#d9861c' }}>
             www.bui.co
           </a>
         </div>
