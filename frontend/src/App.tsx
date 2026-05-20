@@ -21,6 +21,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default function App() {
   const [tab, setTab] = useState<Tab>('generate');
   const [current, setCurrent] = useState<{ query: string; result: GuideResult } | null>(null);
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null);
   const history = useHistory();
   const favorites = useFavorites();
   const { dark, toggle } = useTheme();
@@ -37,7 +38,8 @@ export default function App() {
 
   const handleLoad = useCallback((query: string) => {
     setTab('generate');
-    setCurrent(prev => ({ query, result: prev?.result ?? null as unknown as GuideResult }));
+    setCurrent(null);          // clear old result
+    setPendingQuery(query);    // signal GeneratePage to auto-run
   }, []);
 
   const handleFav = useCallback(() => {
@@ -174,6 +176,8 @@ export default function App() {
             isFav={current ? favorites.has(current.query) : false}
             onFav={handleFav}
             onEmailTemplate={handleEmailTemplate}
+            pendingQuery={pendingQuery}
+            onPendingQueryConsumed={() => setPendingQuery(null)}
           />
         )}
         {tab === 'scripts'   && <ScriptBuilderPage />}

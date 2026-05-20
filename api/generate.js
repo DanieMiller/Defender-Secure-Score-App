@@ -1,76 +1,68 @@
 const { callGemini, setCors } = require('./_gemini');
 
-const GUIDE_SYSTEM = `You are a Microsoft security expert specializing in Defender for Endpoint Secure Score remediation.
+// Tight, focused system prompt — less tokens = faster response
+const GUIDE_SYSTEM = `You are a Microsoft security expert. Generate concise Defender Secure Score implementation guides.
 
-RULES:
-- Never hallucinate registry keys, OMA-URI paths, or CSP settings. If uncertain say "verify in Microsoft Learn"
-- Cite real URLs from learn.microsoft.com
-- Prefer Settings Catalog over OMA-URI for Intune
-
-Respond ONLY with raw JSON, no markdown, no code fences:
+Respond ONLY with raw JSON (no markdown, no fences):
 {
   "confidence": "High|Medium|Low",
-  "summary": "2-3 sentences on what this does and why it matters",
+  "summary": "1-2 sentences: what this does and why it matters",
   "category": "e.g. Attack Surface Reduction",
-  "affected_os": ["Windows 10", "Windows 11"],
+  "affected_os": ["Windows 10","Windows 11"],
   "user_impact": "Low|Medium|High",
-  "platforms": ["Windows", "Intune"],
+  "platforms": ["Windows","Intune"],
   "intune": {
     "method": "Settings Catalog|OMA-URI|Endpoint Security|Administrative Templates",
-    "steps": ["step 1", "step 2", "step 3"],
+    "steps": ["step 1","step 2","step 3"],
     "settings_path": "exact Settings Catalog path or null",
     "oma_uri": "OMA-URI or null",
-    "data_type": "data type or null",
+    "data_type": "type or null",
     "value": "value to configure"
   },
   "gpo": {
-    "steps": ["step 1", "step 2", "step 3"],
-    "policy_path": "Computer Configuration > ... > exact path",
-    "setting_name": "exact GPO setting name",
+    "steps": ["step 1","step 2","step 3"],
+    "policy_path": "Computer Configuration > exact path",
+    "setting_name": "exact setting name",
     "value": "Enabled|Disabled|value",
     "admx": "ADMX file or null",
-    "registry_key": "HKLM\\\\path or null",
-    "registry_value": "value name or null",
-    "registry_data": "data and type or null"
+    "registry_key": "HKLM\\path or null",
+    "registry_value": "name or null",
+    "registry_data": "data/type or null"
   },
   "entra": {
-    "applicable": true,
-    "steps": ["step 1", "step 2"],
-    "portal_path": "exact Entra admin center path or null",
-    "policy_type": "Conditional Access|Authentication Methods|Security Defaults|MFA|Identity Protection|null",
-    "settings": [{"name": "setting name", "value": "value"}],
+    "applicable": false,
+    "steps": [],
+    "portal_path": null,
+    "policy_type": null,
+    "settings": [],
     "conditional_access": false,
-    "ca_policy_name": "policy name or null",
-    "graph_api": "Graph API call or null",
+    "ca_policy_name": null,
+    "graph_api": null,
     "powershell": null,
-    "notes": "any notes or null"
+    "notes": null
   },
-  "validation_steps": ["step 1", "step 2", "step 3"],
-  "risks": ["risk 1", "risk 2"],
-  "references": [
-    {"title": "title", "url": "https://learn.microsoft.com/...", "type": "Official Docs"}
-  ]
+  "validation_steps": ["step 1","step 2"],
+  "risks": ["risk 1"],
+  "references": [{"title":"title","url":"https://learn.microsoft.com/...","type":"Official Docs"}]
 }
-For endpoint-only settings set entra.applicable=false and entra.steps=[].
-CRITICAL: Valid complete JSON only. Be concise.`;
+For identity/MFA/Entra recommendations set entra.applicable=true and fill in the entra fields.
+CRITICAL: Valid complete JSON only. Be concise — max 3 steps per section.`;
 
-const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate concise production-safe scripts.
-
-Respond ONLY with raw JSON, no markdown, no code fences:
+const SCRIPTS_SYSTEM = `Generate concise PowerShell scripts for Intune deployment.
+Respond ONLY with raw JSON:
 {
-  "detection": "# Detection script - max 20 lines with comments\\n# Exit 0 = compliant, Exit 1 = not compliant",
-  "implementation": "# Implementation script - max 20 lines with comments",
-  "validation": "# Validation script - max 15 lines with comments",
+  "detection": "# Exit 0=compliant, 1=not compliant\\n<script max 15 lines>",
+  "implementation": "# Implementation script\\n<script max 15 lines>",
+  "validation": "# Validation script\\n<script max 10 lines>",
   "rollback": {
-    "intune": "one sentence: how to revert in Intune",
-    "gpo": "one sentence: how to revert via GPO",
-    "entra": "one sentence: how to revert in Entra ID or null",
-    "powershell": "# Rollback script - max 15 lines"
+    "intune": "Remove policy or set to Not Configured",
+    "gpo": "Set to Not Configured in Group Policy",
+    "entra": null,
+    "powershell": "# Rollback script\\n<script max 10 lines>"
   }
 }
-CRITICAL: Valid complete JSON only. Keep ALL scripts under 20 lines each.`;
+CRITICAL: Valid complete JSON. Scripts max 15 lines each.`;
 
-// Main guide - no scripts
 module.exports = async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -83,20 +75,18 @@ module.exports = async function handler(req, res) {
 
   try {
     if (includeScripts) {
-      // Scripts-only request from the frontend "Generate Scripts" button
       const scripts = await callGemini(
-        `Generate PowerShell detection, implementation, validation and rollback scripts for: "${q}"\nKeep each script under 20 lines. JSON only.`,
+        `Generate PowerShell scripts for: "${q}". Detection (exit 0/1), implementation, validation, rollback. Max 15 lines each.`,
         SCRIPTS_SYSTEM,
-        2000
+        1500
       );
       return res.status(200).json({ ok: true, scripts });
     }
 
-    // Normal guide request - no scripts, much faster
     const result = await callGemini(
-      `Generate implementation guide for this Defender Secure Score recommendation: "${q}"\nInclude Intune, GPO, Entra ID steps, validation steps, risks, and Microsoft Learn URLs.\nJSON only, be concise.`,
+      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune, GPO${q.toLowerCase().includes('mfa') || q.toLowerCase().includes('auth') || q.toLowerCase().includes('entra') || q.toLowerCase().includes('identity') || q.toLowerCase().includes('password') || q.toLowerCase().includes('conditional') ? ', and Entra ID' : ''}. Concise JSON only.`,
       GUIDE_SYSTEM,
-      3000
+      2000
     );
 
     res.status(200).json({ ok: true, result });
