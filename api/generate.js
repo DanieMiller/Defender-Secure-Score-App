@@ -108,22 +108,9 @@ Set entra.applicable=true for MFA/Conditional Access/identity recommendations.
 Set defender.applicable=true for Defender for Office 365/Endpoint/Cloud Apps recommendations.
 CRITICAL: Valid complete JSON. Max 3 steps per section.`;
 
-const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate specific, production-safe PowerShell scripts for Intune deployment.
-
-Respond ONLY with raw JSON, no markdown, no code fences:
-{
-  "detection": "# Detection script - SPECIFIC to this recommendation\\n# Exit 0=compliant, Exit 1=not compliant\\n<full script 20-30 lines with error handling>",
-  "implementation": "# Implementation script - SPECIFIC to this recommendation\\n# Applies the security setting\\n<full script 20-30 lines with try/catch>",
-  "validation": "# Validation - confirms setting was applied correctly\\n<full script 15-20 lines>",
-  "rollback": {
-    "intune": "one sentence: how to revert in Intune",
-    "gpo": "one sentence: how to revert via GPO",
-    "entra": null,
-    "defender": null,
-    "powershell": "# Rollback script - reverts the change\\n<full script 15-20 lines>"
-  }
-}
-Rules: specific to the exact recommendation, try/catch error handling, exit 0/1 for detection, max 30 lines each, complete valid JSON.`;
+const SCRIPTS_SYSTEM = `Microsoft PowerShell expert. Generate Intune-ready scripts. Raw JSON only, no markdown:
+{"detection":"# Exit 0=compliant 1=not\n<15 lines specific to rec>","implementation":"# Apply setting\n<15 lines with try/catch>","validation":"# Verify\n<10 lines>","rollback":{"intune":"revert step","gpo":"revert step","entra":null,"defender":null,"powershell":"# Rollback\n<10 lines>"}}
+Rules: specific to recommendation, exit 0/1, try/catch, max 15 lines each, valid JSON.`;
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
@@ -142,7 +129,7 @@ module.exports = async function handler(req, res) {
       const scripts = await callGemini(
         `Generate specific PowerShell scripts for this Defender Secure Score recommendation: "${q}". Detection (exit 0/1), implementation (applies the fix), validation, and rollback scripts. Make them specific to this recommendation, not generic templates.`,
         SCRIPTS_SYSTEM,
-        3000
+        1200
       );
       return res.status(200).json({ ok: true, scripts });
     }

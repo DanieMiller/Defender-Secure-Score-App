@@ -19,6 +19,8 @@ export async function generateGuide(query: string): Promise<GenerateResponse> {
 }
 
 export async function generateScripts(query: string): Promise<ScriptsResult> {
+  // Small delay to avoid rate limiting when called right after a guide load
+  await new Promise(r => setTimeout(r, 2000));
   const res = await fetch(`${API_BASE}/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

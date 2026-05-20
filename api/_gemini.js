@@ -24,12 +24,13 @@ function repairJSON(raw) {
 }
 
 async function callGemini(prompt, systemPrompt, maxTokens) {
-  // Ordered by reliability — stable releases first, previews as last resort
+  // gemini-1.5-flash has highest free tier RPD (1500) and stable RPM
+  // Use it as primary for scripts to avoid rate limits on 2.0/2.5 models
   const models = [
+    'gemini-1.5-flash',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
     'gemini-2.0-flash-001',
-    'gemini-2.5-flash',
   ];
 
   let lastError = null;
@@ -58,35 +59,22 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
         const is404  = msg.includes('404') || msg.includes('not found');
         const isRetry = is429 || is503;
 
-        if (is404) {
-          console.log(`${modelName} not available, trying next...`);
-          break; // try next model
-        }
-
+        if (is404) { console.log(`${modelName} not available, trying next...`); break; }
         if (isRetry && attempt === 1) {
-          const wait = is503 ? 5000 : 8000; // 503 = brief wait, 429 = longer
-          console.log(`${modelName} unavailable (${is503 ? '503' : '429'}), waiting ${wait/1000}s...`);
+          const wait = is503 ? 5000 : 8000;
+          console.log(`${modelName} unavailable, waiting ${wait/1000}s...`);
           await sleep(wait);
-          continue; // retry same model once
+          continue;
         }
-
-        if (isRetry && attempt === 2) {
-          console.log(`${modelName} still unavailable, trying next model...`);
-          break; // move to next model
-        }
-
-        // Non-retryable error — throw immediately
+        if (isRetry && attempt === 2) { console.log(`${modelName} still unavailable, trying next...`); break; }
         throw err;
       }
     }
   }
 
   const msg = lastError?.message || '';
-  const isRateLimit = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
-  const isOverloaded = msg.includes('503') || msg.includes('overloaded') || msg.includes('high demand');
-
-  if (isRateLimit) throw new Error('RATE_LIMIT');
-  if (isOverloaded) throw new Error('OVERLOADED');
+  if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) throw new Error('RATE_LIMIT');
+  if (msg.includes('503') || msg.includes('overloaded') || msg.includes('high demand')) throw new Error('OVERLOADED');
   throw lastError || new Error('All models failed. Please try again.');
 }
 

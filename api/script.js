@@ -41,7 +41,7 @@ The scripts must be tailored specifically to this request - not generic. Include
 
 Return complete valid JSON only.`;
 
-    const result = await callGemini(prompt, SCRIPT_SYSTEM, 4000);
+    const result = await callGemini(prompt, SCRIPT_SYSTEM, 1500);
     res.status(200).json({ ok: true, result });
   } catch (err) {
     console.error('Script error:', err.message);
