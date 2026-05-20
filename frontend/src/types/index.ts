@@ -44,6 +44,13 @@ export interface Rollback {
   powershell: string;
 }
 
+export interface ScriptsResult {
+  detection: string;
+  implementation: string;
+  validation: string;
+  rollback: Rollback;
+}
+
 export interface Reference {
   title: string;
   url: string;
@@ -60,11 +67,11 @@ export interface GuideResult {
   intune: IntuneConfig;
   gpo: GPOConfig;
   entra: EntraConfig;
-  powershell: PowerShellScripts;
   validation_steps: string[];
-  rollback: Rollback;
   risks: string[];
   references: Reference[];
+  // Scripts loaded on demand
+  scripts?: ScriptsResult;
 }
 
 export interface HistoryItem {

@@ -1,33 +1,30 @@
 const { callGemini, setCors } = require('./_gemini');
 
-const GUIDE_SYSTEM = `You are a Microsoft security expert specializing in Defender for Endpoint Secure Score remediation. You help administrators implement security recommendations using Intune, Group Policy, Entra ID, and PowerShell.
+const GUIDE_SYSTEM = `You are a Microsoft security expert specializing in Defender for Endpoint Secure Score remediation.
 
 RULES:
-- Never hallucinate registry keys, OMA-URI paths, CSP settings, or Entra ID portal paths. If uncertain, say "verify in Microsoft Learn"
-- Always cite source URLs from learn.microsoft.com or microsoft.com
-- Warn about potential disruptions to users or legacy systems
-- Prefer Settings Catalog over OMA-URI for Intune where available
-- Use production-safe PowerShell with error handling and comments
-- Keep PowerShell scripts concise but complete
+- Never hallucinate registry keys, OMA-URI paths, or CSP settings. If uncertain say "verify in Microsoft Learn"
+- Cite real URLs from learn.microsoft.com
+- Prefer Settings Catalog over OMA-URI for Intune
 
 Respond ONLY with raw JSON, no markdown, no code fences:
 {
   "confidence": "High|Medium|Low",
-  "summary": "2-3 sentence explanation",
+  "summary": "2-3 sentences on what this does and why it matters",
   "category": "e.g. Attack Surface Reduction",
   "affected_os": ["Windows 10", "Windows 11"],
   "user_impact": "Low|Medium|High",
-  "platforms": ["Windows", "Entra ID", "Intune"],
+  "platforms": ["Windows", "Intune"],
   "intune": {
     "method": "Settings Catalog|OMA-URI|Endpoint Security|Administrative Templates",
-    "steps": ["step 1", "step 2"],
-    "settings_path": "exact path or null",
+    "steps": ["step 1", "step 2", "step 3"],
+    "settings_path": "exact Settings Catalog path or null",
     "oma_uri": "OMA-URI or null",
     "data_type": "data type or null",
     "value": "value to configure"
   },
   "gpo": {
-    "steps": ["step 1", "step 2"],
+    "steps": ["step 1", "step 2", "step 3"],
     "policy_path": "Computer Configuration > ... > exact path",
     "setting_name": "exact GPO setting name",
     "value": "Enabled|Disabled|value",
@@ -39,47 +36,69 @@ Respond ONLY with raw JSON, no markdown, no code fences:
   "entra": {
     "applicable": true,
     "steps": ["step 1", "step 2"],
-    "portal_path": "exact navigation path or null",
+    "portal_path": "exact Entra admin center path or null",
     "policy_type": "Conditional Access|Authentication Methods|Security Defaults|MFA|Identity Protection|null",
     "settings": [{"name": "setting name", "value": "value"}],
     "conditional_access": false,
     "ca_policy_name": "policy name or null",
-    "graph_api": "Graph API endpoint or null",
-    "powershell": "# Graph PowerShell script or null",
-    "notes": "important notes or null"
+    "graph_api": "Graph API call or null",
+    "powershell": null,
+    "notes": "any notes or null"
   },
-  "powershell": {
-    "detection": "# detection script",
-    "implementation": "# implementation script",
-    "validation": "# validation script"
-  },
-  "validation_steps": ["step 1", "step 2"],
-  "rollback": {
-    "intune": "how to revert in Intune",
-    "gpo": "how to revert via GPO",
-    "entra": "how to revert in Entra ID or null",
-    "powershell": "# rollback script"
-  },
+  "validation_steps": ["step 1", "step 2", "step 3"],
   "risks": ["risk 1", "risk 2"],
-  "references": [{"title": "title", "url": "https://learn.microsoft.com/...", "type": "Official Docs"}]
+  "references": [
+    {"title": "title", "url": "https://learn.microsoft.com/...", "type": "Official Docs"}
+  ]
 }
-For endpoint-only recommendations set entra.applicable to false and entra.steps to [].
-CRITICAL: Return complete valid JSON. Keep scripts under 30 lines each.`;
+For endpoint-only settings set entra.applicable=false and entra.steps=[].
+CRITICAL: Valid complete JSON only. Be concise.`;
 
+const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate concise production-safe scripts.
+
+Respond ONLY with raw JSON, no markdown, no code fences:
+{
+  "detection": "# Detection script - max 20 lines with comments\\n# Exit 0 = compliant, Exit 1 = not compliant",
+  "implementation": "# Implementation script - max 20 lines with comments",
+  "validation": "# Validation script - max 15 lines with comments",
+  "rollback": {
+    "intune": "one sentence: how to revert in Intune",
+    "gpo": "one sentence: how to revert via GPO",
+    "entra": "one sentence: how to revert in Entra ID or null",
+    "powershell": "# Rollback script - max 15 lines"
+  }
+}
+CRITICAL: Valid complete JSON only. Keep ALL scripts under 20 lines each.`;
+
+// Main guide - no scripts
 module.exports = async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { query } = req.body || {};
+  const { query, includeScripts } = req.body || {};
   if (!query || !query.trim()) return res.status(400).json({ error: 'query is required' });
 
-  try {
-    const prompt = `Generate a comprehensive but concise implementation guide for this Microsoft Defender Secure Score recommendation: "${query.trim()}"
-Include exact Intune paths, GPO paths, registry mappings, Entra ID steps if identity-related, PowerShell scripts, and real Microsoft Learn URLs.
-IMPORTANT: Return complete valid JSON only. Do not truncate.`;
+  const q = query.trim();
 
-    const result = await callGemini(prompt, GUIDE_SYSTEM);
+  try {
+    if (includeScripts) {
+      // Scripts-only request from the frontend "Generate Scripts" button
+      const scripts = await callGemini(
+        `Generate PowerShell detection, implementation, validation and rollback scripts for: "${q}"\nKeep each script under 20 lines. JSON only.`,
+        SCRIPTS_SYSTEM,
+        2000
+      );
+      return res.status(200).json({ ok: true, scripts });
+    }
+
+    // Normal guide request - no scripts, much faster
+    const result = await callGemini(
+      `Generate implementation guide for this Defender Secure Score recommendation: "${q}"\nInclude Intune, GPO, Entra ID steps, validation steps, risks, and Microsoft Learn URLs.\nJSON only, be concise.`,
+      GUIDE_SYSTEM,
+      3000
+    );
+
     res.status(200).json({ ok: true, result });
   } catch (err) {
     console.error('Generate error:', err.message);

@@ -1,7 +1,5 @@
-import type { GuideResult } from '../types';
+import type { GuideResult, ScriptsResult } from '../types';
 
-// In Azure Static Web Apps, /api/* is automatically routed to Azure Functions.
-// In local dev, Vite proxies /api/* to the local functions emulator or backend.
 const API_BASE = '/api';
 
 export async function generateGuide(query: string): Promise<GuideResult> {
@@ -13,6 +11,17 @@ export async function generateGuide(query: string): Promise<GuideResult> {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
   return data.result as GuideResult;
+}
+
+export async function generateScripts(query: string): Promise<ScriptsResult> {
+  const res = await fetch(`${API_BASE}/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, includeScripts: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+  return data.scripts as ScriptsResult;
 }
 
 export async function generateScript(request: string): Promise<ScriptResult> {

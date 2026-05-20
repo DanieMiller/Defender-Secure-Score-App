@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Shield, Sun, Moon } from 'lucide-react';
-import type { GuideResult } from './types';
+import type { GuideResult, ScriptsResult } from './types';
 import { GeneratePage } from './pages/GeneratePage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryFavPages';
 import { ScriptBuilderPage } from './pages/ScriptBuilderPage';
@@ -49,6 +49,11 @@ export default function App() {
       favorites.add(current.query);
     }
   }, [current, favorites]);
+
+  const handleScriptsLoaded = useCallback((scripts: ScriptsResult) => {
+    if (!current) return;
+    setCurrent(prev => prev ? { ...prev, result: { ...prev.result, scripts } } : null);
+  }, [current]);
 
   const handleEmailTemplate = useCallback(() => setTab('email'), []);
 
@@ -140,7 +145,7 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 py-6">
         {tab === 'generate' && (
-          <GeneratePage onResult={handleResult} savedResult={current}
+          <GeneratePage onResult={handleResult} onScriptsLoaded={handleScriptsLoaded} savedResult={current}
             isFav={current ? favorites.has(current.query) : false}
             onFav={handleFav} onEmailTemplate={handleEmailTemplate} />
         )}

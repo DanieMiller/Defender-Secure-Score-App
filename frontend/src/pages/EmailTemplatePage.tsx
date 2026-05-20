@@ -174,7 +174,7 @@ function buildEmail(query: string, r: GuideResult, tone: Tone, platform: Platfor
     ? `RISKS & CONSIDERATIONS\n${'─'.repeat(40)}\n${r.risks.map(x => `• ${x}`).join('\n')}\n\nPlease test this change in a pilot group before broad deployment.`
     : '';
 
-  const rollback = `ROLLBACK PROCEDURE\n${'─'.repeat(40)}\nIf issues arise after implementation:\n• Intune: ${r.rollback.intune}\n• GPO: ${r.rollback.gpo}${r.rollback.entra ? `\n• Entra ID: ${r.rollback.entra}` : ''}`;
+  const rollback = `ROLLBACK PROCEDURE\n${'─'.repeat(40)}\nIf issues arise after implementation:\n• Intune: ${r.scripts?.rollback?.intune || 'Remove the policy or set to Not Configured'}\n• GPO: ${r.scripts?.rollback?.gpo || 'Set to Not Configured in Group Policy'}${r.scripts?.rollback?.entra ? `\n• Entra ID: ${r.scripts?.rollback?.entra}` : ''}`;
 
   const refs = r.references.length > 0
     ? `REFERENCES\n${'─'.repeat(40)}\n${r.references.map(x => `• ${x.title}: ${x.url}`).join('\n')}`

@@ -23,7 +23,7 @@ function repairJSON(raw) {
   throw new Error('Could not parse AI response. Please try again.');
 }
 
-async function callGemini(prompt, systemPrompt) {
+async function callGemini(prompt, systemPrompt, maxTokens) {
   const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
   for (const modelName of models) {
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -31,7 +31,11 @@ async function callGemini(prompt, systemPrompt) {
         const model = genAI.getGenerativeModel({
           model: modelName,
           systemInstruction: systemPrompt,
-          generationConfig: { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: 'application/json' },
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: maxTokens || 4096,
+            responseMimeType: 'application/json',
+          },
         });
         const result = await model.generateContent(prompt);
         return repairJSON(result.response.text());
@@ -54,4 +58,4 @@ function setCors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-module.exports = { callGemini, setCors };
+module.exports = { callGemini, setCors, repairJSON };
