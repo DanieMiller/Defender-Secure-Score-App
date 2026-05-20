@@ -33,7 +33,6 @@ export function ScriptsTab({ result, query, onScriptsLoaded }: ScriptsTabProps) 
     }
   }
 
-  // Not yet generated
   if (!scripts && !loading) {
     return (
       <div className="flex flex-col items-center py-8 gap-4 text-center">
@@ -60,42 +59,47 @@ export function ScriptsTab({ result, query, onScriptsLoaded }: ScriptsTabProps) 
     );
   }
 
-  // Loading
   if (loading) {
     return (
       <div className="flex flex-col items-center py-8 gap-3">
         <Spinner size={36} />
         <div className="text-sm font-mono" style={{ color: 'var(--text2)' }}>Generating scripts…</div>
+        <div className="text-xs font-mono" style={{ color: 'var(--text3)' }}>Building specific detection and remediation logic</div>
       </div>
     );
   }
 
-  // Helper to safely get script content — handles both field name variants
-  const getScript = (key: ScriptTab): string => {
-    if (!scripts) return '# Script not available';
-    // Handle both 'implementation' and 'remediation' field names from API
-    if (key === 'implementation') {
-      return (scripts as any).implementation || (scripts as any).remediation || '# Implementation script not available';
-    }
-    if (key === 'rollback') return ''; // handled separately
-    return (scripts as any)[key] || `# ${key} script not available`;
+  // Safely read script content — scripts object may use different field names
+  // from different API calls, so we cast to any and fallback gracefully
+  const raw = scripts as any;
+  const scriptContent: Record<ScriptTab, string> = {
+    detection:      raw?.detection      || '# Detection script not available',
+    implementation: raw?.implementation || raw?.remediation || '# Implementation script not available',
+    validation:     raw?.validation     || '# Validation script not available',
+    rollback:       raw?.rollback?.powershell || raw?.rollback || '# Rollback script not available',
   };
 
-  // Safe rollback access
-  const rollback = scripts?.rollback;
+  const rollback = typeof raw?.rollback === 'object' ? raw.rollback : null;
+
+  const TAB_LABELS: Record<ScriptTab, string> = {
+    detection: 'Detection',
+    implementation: 'Implementation',
+    validation: 'Validation',
+    rollback: 'Rollback',
+  };
 
   return (
     <div>
       {/* Sub-tab bar */}
       <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: 'var(--bg3)' }}>
-        {(['detection', 'implementation', 'validation', 'rollback'] as const).map(t => (
+        {(Object.keys(TAB_LABELS) as ScriptTab[]).map(t => (
           <button key={t} onClick={() => setScriptTab(t)}
-            className="flex-1 text-xs py-1.5 rounded-md font-medium capitalize transition-colors"
+            className="flex-1 text-xs py-1.5 rounded-md font-medium transition-colors"
             style={{
               background: scriptTab === t ? 'var(--acc)' : 'transparent',
               color: scriptTab === t ? 'white' : 'var(--text3)',
             }}>
-            {t}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -104,68 +108,59 @@ export function ScriptsTab({ result, query, onScriptsLoaded }: ScriptsTabProps) 
       {scriptTab === 'detection' && (
         <div>
           <InfoBox>Deploy as an Intune <strong>Detection script</strong> — exits 0 if compliant, 1 if remediation needed.</InfoBox>
-          <CodeBlock code={getScript('detection')} />
+          <CodeBlock code={scriptContent.detection} />
         </div>
       )}
 
-      {/* Implementation / Remediation */}
+      {/* Implementation */}
       {scriptTab === 'implementation' && (
         <div>
-          <InfoBox>Run standalone or deploy as an Intune <strong>Remediation script</strong>.</InfoBox>
-          <CodeBlock code={getScript('implementation')} />
+          <InfoBox>Deploy as an Intune <strong>Remediation script</strong>, or run standalone to apply the setting.</InfoBox>
+          <CodeBlock code={scriptContent.implementation} />
         </div>
       )}
 
       {/* Validation */}
       {scriptTab === 'validation' && (
-        <CodeBlock code={getScript('validation')} />
+        <div>
+          <InfoBox>Run after implementation to confirm the setting was applied correctly.</InfoBox>
+          <CodeBlock code={scriptContent.validation} />
+        </div>
       )}
 
       {/* Rollback */}
       {scriptTab === 'rollback' && (
         <div className="space-y-3">
-          {rollback ? (
+          {rollback && (
             <>
               {rollback.intune && (
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Intune</div>
-                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>
-                    {rollback.intune}
-                  </div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Intune rollback</div>
+                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>{rollback.intune}</div>
                 </div>
               )}
               {rollback.gpo && (
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>GPO</div>
-                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>
-                    {rollback.gpo}
-                  </div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>GPO rollback</div>
+                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>{rollback.gpo}</div>
                 </div>
               )}
               {rollback.entra && (
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Entra ID</div>
-                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>
-                    {rollback.entra}
-                  </div>
-                </div>
-              )}
-              {rollback.powershell && (
-                <div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Rollback script</div>
-                  <CodeBlock code={rollback.powershell} />
+                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Entra ID rollback</div>
+                  <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>{rollback.entra}</div>
                 </div>
               )}
             </>
-          ) : (
-            <div className="text-center py-4 text-sm" style={{ color: 'var(--text3)' }}>
-              Rollback information not available. Regenerate scripts to retry.
-            </div>
           )}
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>PowerShell rollback script</div>
+            <CodeBlock code={scriptContent.rollback} />
+          </div>
         </div>
       )}
 
-      {/* Regenerate button */}
+      {/* Regenerate */}
       <div className="mt-4 pt-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
         <button onClick={handleGenerate}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"

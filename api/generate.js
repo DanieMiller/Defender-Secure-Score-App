@@ -1,6 +1,5 @@
 const { callGemini, setCors } = require('./_gemini');
 
-// Tight, focused system prompt — less tokens = faster response
 const GUIDE_SYSTEM = `You are a Microsoft security expert. Generate concise Defender Secure Score implementation guides.
 
 Respond ONLY with raw JSON (no markdown, no fences):
@@ -46,22 +45,28 @@ Respond ONLY with raw JSON (no markdown, no fences):
   "references": [{"title":"title","url":"https://learn.microsoft.com/...","type":"Official Docs"}]
 }
 For identity/MFA/Entra recommendations set entra.applicable=true and fill in the entra fields.
-CRITICAL: Valid complete JSON only. Be concise — max 3 steps per section.`;
+CRITICAL: Valid complete JSON only. Max 3 steps per section.`;
 
-const SCRIPTS_SYSTEM = `Generate concise PowerShell scripts for Intune deployment.
-Respond ONLY with raw JSON:
+const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate specific, production-safe PowerShell scripts for Intune deployment.
+
+Respond ONLY with raw JSON, no markdown, no code fences:
 {
-  "detection": "# Exit 0=compliant, 1=not compliant\\n<script max 15 lines>",
-  "implementation": "# Implementation script\\n<script max 15 lines>",
-  "validation": "# Validation script\\n<script max 10 lines>",
+  "detection": "# Detection script - SPECIFIC to this recommendation\\n# Exit 0=compliant, Exit 1=not compliant\\n<full script 20-30 lines with error handling>",
+  "implementation": "# Implementation script - SPECIFIC to this recommendation\\n# Applies the security setting\\n<full script 20-30 lines with try/catch>",
+  "validation": "# Validation - confirms setting was applied correctly\\n<full script 15-20 lines>",
   "rollback": {
-    "intune": "Remove policy or set to Not Configured",
-    "gpo": "Set to Not Configured in Group Policy",
+    "intune": "one sentence: how to revert in Intune",
+    "gpo": "one sentence: how to revert via GPO",
     "entra": null,
-    "powershell": "# Rollback script\\n<script max 10 lines>"
+    "powershell": "# Rollback script - reverts the change\\n<full script 15-20 lines>"
   }
 }
-CRITICAL: Valid complete JSON. Scripts max 15 lines each.`;
+Rules:
+- Scripts MUST be specific to the exact recommendation - not generic
+- Include proper try/catch error handling
+- Detection MUST exit 0 (compliant) or 1 (non-compliant) only
+- Use $ErrorActionPreference and Write-Output for logging
+- CRITICAL: Valid complete JSON only`;
 
 module.exports = async function handler(req, res) {
   setCors(res);
@@ -76,15 +81,16 @@ module.exports = async function handler(req, res) {
   try {
     if (includeScripts) {
       const scripts = await callGemini(
-        `Generate PowerShell scripts for: "${q}". Detection (exit 0/1), implementation, validation, rollback. Max 15 lines each.`,
+        `Generate specific PowerShell scripts for this Defender Secure Score recommendation: "${q}". Detection (exit 0/1), implementation (applies the fix), validation, and rollback scripts. Make them specific to this recommendation, not generic templates.`,
         SCRIPTS_SYSTEM,
-        1500
+        3000
       );
       return res.status(200).json({ ok: true, scripts });
     }
 
+    const isIdentity = /mfa|auth|entra|identity|password|conditional|azure ad|sign.in/i.test(q);
     const result = await callGemini(
-      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune, GPO${q.toLowerCase().includes('mfa') || q.toLowerCase().includes('auth') || q.toLowerCase().includes('entra') || q.toLowerCase().includes('identity') || q.toLowerCase().includes('password') || q.toLowerCase().includes('conditional') ? ', and Entra ID' : ''}. Concise JSON only.`,
+      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune, GPO${isIdentity ? ', and Entra ID' : ''}. Concise JSON only.`,
       GUIDE_SYSTEM,
       2000
     );
