@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Cloud, Building2, Terminal, CheckCircle, RotateCcw,
-  AlertTriangle, Link2, ClipboardList, Download, Star, ShieldCheck, Mail,
+  AlertTriangle, Link2, ClipboardList, Download, Star,
+  ShieldCheck, Mail, Shield,
 } from 'lucide-react';
 import type { GuideResult, ScriptsResult } from '../types';
 import {
@@ -19,25 +20,11 @@ interface ResultsProps {
   onScriptsLoaded: (scripts: ScriptsResult) => void;
 }
 
-type ImplTab = 'intune' | 'gpo' | 'entra' | 'scripts';
+type ImplTab = 'intune' | 'gpo' | 'entra' | 'defender' | 'scripts';
 type DetailTab = 'validation' | 'rollback' | 'risks' | 'refs';
 
-const IMPL_TABS = [
-  { id: 'intune'   as ImplTab, label: 'Intune',    icon: <Cloud size={13} /> },
-  { id: 'gpo'     as ImplTab, label: 'GPO',        icon: <Building2 size={13} /> },
-  { id: 'entra'   as ImplTab, label: 'Entra ID',   icon: <ShieldCheck size={13} /> },
-  { id: 'scripts' as ImplTab, label: 'Scripts',    icon: <Terminal size={13} /> },
-];
-
-const DETAIL_TABS = [
-  { id: 'validation' as DetailTab, label: 'Validation', icon: <CheckCircle size={12} /> },
-  { id: 'rollback'   as DetailTab, label: 'Rollback',   icon: <RotateCcw size={12} /> },
-  { id: 'risks'      as DetailTab, label: 'Risks',      icon: <AlertTriangle size={12} /> },
-  { id: 'refs'       as DetailTab, label: 'References', icon: <Link2 size={12} /> },
-];
-
 function TabBar<T extends string>({ tabs, active, onSelect, badge }: {
-  tabs: { id: T; label: string; icon: React.ReactNode }[];
+  tabs: { id: T; label: string; icon: React.ReactNode; dim?: boolean }[];
   active: T;
   onSelect: (id: T) => void;
   badge?: Partial<Record<T, string>>;
@@ -49,13 +36,14 @@ function TabBar<T extends string>({ tabs, active, onSelect, badge }: {
           className="flex items-center gap-1.5 flex-1 justify-center py-2.5 text-xs font-semibold transition-colors"
           style={{
             borderBottom: active === t.id ? '2px solid var(--acc)' : '2px solid transparent',
-            color: active === t.id ? 'var(--acc2)' : 'var(--text3)',
-            background: active === t.id ? 'rgba(234,88,12,0.05)' : 'transparent',
+            color: active === t.id ? 'var(--acc2)' : t.dim ? 'var(--text3)' : 'var(--text3)',
+            background: active === t.id ? 'rgba(217,134,28,0.05)' : 'transparent',
+            opacity: t.dim ? 0.45 : 1,
           }}>
           {t.icon}{t.label}
           {badge?.[t.id] && (
             <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded-full font-mono"
-              style={{ background: 'rgba(234,88,12,0.2)', color: 'var(--acc2)' }}>
+              style={{ background: 'rgba(217,134,28,0.2)', color: 'var(--acc2)' }}>
               {badge[t.id]}
             </span>
           )}
@@ -68,6 +56,24 @@ function TabBar<T extends string>({ tabs, active, onSelect, badge }: {
 export function Results({ query, result, isFav, onFav, onEmailTemplate, onScriptsLoaded }: ResultsProps) {
   const [implTab, setImplTab] = useState<ImplTab>('intune');
   const [detailTab, setDetailTab] = useState<DetailTab>('validation');
+
+  const defenderApplicable = result.defender?.applicable === true;
+  const entraApplicable = result.entra?.applicable === true;
+
+  const IMPL_TABS: { id: ImplTab; label: string; icon: React.ReactNode; dim?: boolean }[] = [
+    { id: 'intune',   label: 'Intune',    icon: <Cloud size={13} /> },
+    { id: 'gpo',      label: 'GPO',       icon: <Building2 size={13} /> },
+    { id: 'entra',    label: 'Entra ID',  icon: <ShieldCheck size={13} />, dim: !entraApplicable },
+    { id: 'defender', label: 'Defender',  icon: <Shield size={13} />,      dim: !defenderApplicable },
+    { id: 'scripts',  label: 'Scripts',   icon: <Terminal size={13} /> },
+  ];
+
+  const DETAIL_TABS = [
+    { id: 'validation' as DetailTab, label: 'Validation', icon: <CheckCircle size={12} /> },
+    { id: 'rollback'   as DetailTab, label: 'Rollback',   icon: <RotateCcw size={12} /> },
+    { id: 'risks'      as DetailTab, label: 'Risks',      icon: <AlertTriangle size={12} /> },
+    { id: 'refs'       as DetailTab, label: 'References', icon: <Link2 size={12} /> },
+  ];
 
   const exportMD = () => {
     const md = buildMarkdown(query, result);
@@ -88,7 +94,13 @@ export function Results({ query, result, isFav, onFav, onEmailTemplate, onScript
           <div className="flex gap-2 mt-2 flex-wrap">
             <ConfidenceBadge level={result.confidence} />
             <ImpactBadge level={result.user_impact} />
-            {(result.platforms || []).map(p => (
+            {defenderApplicable && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold"
+                style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }}>
+                <Shield size={10} /> {result.defender?.product || 'Defender'}
+              </span>
+            )}
+            {(result.platforms || []).filter(p => p !== 'Entra ID').map(p => (
               <span key={p} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono"
                 style={{ background: 'var(--bg3)', color: 'var(--text3)', border: '1px solid var(--border)' }}>{p}</span>
             ))}
@@ -126,7 +138,7 @@ export function Results({ query, result, isFav, onFav, onEmailTemplate, onScript
         <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text2)' }}>{result.summary}</p>
         <KVTable rows={[
           ['Category',    result.category],
-          ['Affected OS', result.affected_os.join(', ')],
+          ['Affected OS', result.affected_os?.join(', ') || '—'],
           ['User impact', <ImpactBadge level={result.user_impact} />],
           ['Confidence',  <ConfidenceBadge level={result.confidence} />],
         ]} />
@@ -141,10 +153,11 @@ export function Results({ query, result, isFav, onFav, onEmailTemplate, onScript
           badge={{ scripts: result.scripts ? '✓' : undefined }}
         />
         <div className="p-4">
-          {implTab === 'intune'  && <IntuneTab result={result} />}
-          {implTab === 'gpo'    && <GPOTab result={result} />}
-          {implTab === 'entra'  && <EntraTab result={result} />}
-          {implTab === 'scripts'&& <ScriptsTab result={result} query={query} onScriptsLoaded={onScriptsLoaded} />}
+          {implTab === 'intune'   && <IntuneTab result={result} />}
+          {implTab === 'gpo'     && <GPOTab result={result} />}
+          {implTab === 'entra'   && <EntraTab result={result} />}
+          {implTab === 'defender'&& <DefenderTab result={result} />}
+          {implTab === 'scripts' && <ScriptsTab result={result} query={query} onScriptsLoaded={onScriptsLoaded} />}
         </div>
       </Card>
 
@@ -152,7 +165,7 @@ export function Results({ query, result, isFav, onFav, onEmailTemplate, onScript
       <Card className="overflow-hidden">
         <TabBar tabs={DETAIL_TABS} active={detailTab} onSelect={setDetailTab} />
         <div className="p-4">
-          {detailTab === 'validation' && <StepList steps={result.validation_steps} />}
+          {detailTab === 'validation' && <StepList steps={result.validation_steps || []} />}
           {detailTab === 'rollback'   && <RollbackTab result={result} />}
           {detailTab === 'risks'      && <RisksTab result={result} />}
           {detailTab === 'refs'       && <RefsTab result={result} />}
@@ -162,26 +175,30 @@ export function Results({ query, result, isFav, onFav, onEmailTemplate, onScript
   );
 }
 
+// ── Tab content components ───────────────────────────────────────────────────
+
 function IntuneTab({ result }: { result: GuideResult }) {
   const { intune } = result;
+  if (!intune) return <InfoBox>No Intune data available.</InfoBox>;
   return (
     <div className="space-y-3">
       <div><AccPill>Method: {intune.method}</AccPill></div>
       {intune.settings_path && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Settings catalog path</div><OmaBlock label="" value={intune.settings_path} /></div>}
       {intune.oma_uri && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>OMA-URI</div><OmaBlock label="Path" value={intune.oma_uri} />{intune.data_type && <OmaBlock label="Data type" value={intune.data_type} />}<OmaBlock label="Value" value={intune.value} /></div>}
-      <StepList steps={intune.steps} />
+      <StepList steps={intune.steps || []} />
     </div>
   );
 }
 
 function GPOTab({ result }: { result: GuideResult }) {
   const { gpo } = result;
+  if (!gpo) return <InfoBox>No GPO data available.</InfoBox>;
   return (
     <div className="space-y-3">
       {gpo.policy_path && <OmaBlock label="Policy path" value={gpo.policy_path} />}
       {gpo.setting_name && <KVTable rows={[['Setting name', gpo.setting_name], ['Value', gpo.value], ...(gpo.admx ? [['ADMX', gpo.admx] as [string, React.ReactNode]] : [])]} />}
       {gpo.registry_key && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--text3)' }}>Registry mapping</div><OmaBlock label="Key" value={gpo.registry_key} />{gpo.registry_value && <OmaBlock label="Value name" value={gpo.registry_value} />}{gpo.registry_data && <OmaBlock label="Data / type" value={gpo.registry_data} />}</div>}
-      <StepList steps={gpo.steps} />
+      <StepList steps={gpo.steps || []} />
     </div>
   );
 }
@@ -192,7 +209,7 @@ function EntraTab({ result }: { result: GuideResult }) {
     <div className="text-center py-8">
       <ShieldCheck size={32} className="mx-auto mb-3 opacity-20" style={{ color: 'var(--text3)' }} />
       <div className="text-sm font-medium" style={{ color: 'var(--text3)' }}>Not applicable for Entra ID</div>
-      <div className="text-xs mt-1" style={{ color: 'var(--text3)' }}>This is an endpoint/device-based recommendation.</div>
+      <div className="text-xs mt-1" style={{ color: 'var(--text3)' }}>This recommendation does not require Entra ID configuration.</div>
     </div>
   );
   return (
@@ -206,10 +223,93 @@ function EntraTab({ result }: { result: GuideResult }) {
         </div>
       )}
       {entra.settings?.length > 0 && <KVTable rows={entra.settings.map(s => [s.name, s.value] as [string, React.ReactNode])} />}
-      {entra.steps.length > 0 && <StepList steps={entra.steps} />}
+      {entra.steps?.length > 0 && <StepList steps={entra.steps} />}
       {entra.graph_api && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Graph API</div><CodeBlock code={entra.graph_api} lang="http" /></div>}
       {entra.powershell && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Graph PowerShell</div><CodeBlock code={entra.powershell} /></div>}
       {entra.notes && <InfoBox>{entra.notes}</InfoBox>}
+    </div>
+  );
+}
+
+function DefenderTab({ result }: { result: GuideResult }) {
+  const { defender } = result;
+  if (!defender?.applicable) return (
+    <div className="text-center py-8">
+      <Shield size={32} className="mx-auto mb-3 opacity-20" style={{ color: 'var(--text3)' }} />
+      <div className="text-sm font-medium" style={{ color: 'var(--text3)' }}>Not applicable for Microsoft Defender</div>
+      <div className="text-xs mt-1 max-w-xs mx-auto" style={{ color: 'var(--text3)' }}>
+        This recommendation does not require changes in the Microsoft 365 Defender portal or Defender product policies.
+      </div>
+    </div>
+  );
+  return (
+    <div className="space-y-4">
+      {/* Product badge */}
+      {defender.product && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+            style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }}>
+            <Shield size={11} /> {defender.product}
+          </span>
+        </div>
+      )}
+
+      {/* Portal path */}
+      {defender.portal_path && (
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>
+            Microsoft 365 Defender portal path
+          </div>
+          <OmaBlock label="" value={defender.portal_path} />
+        </div>
+      )}
+
+      {/* Policy name */}
+      {defender.policy_name && (
+        <div className="flex gap-2 rounded-lg px-3 py-2.5"
+          style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <Shield size={14} style={{ color: '#818cf8', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div className="text-xs font-semibold mb-0.5" style={{ color: '#a5b4fc' }}>Policy</div>
+            <div className="text-xs font-mono" style={{ color: '#818cf8' }}>{defender.policy_name}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings */}
+      {defender.settings?.length > 0 && (
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--text3)' }}>Settings to configure</div>
+          <KVTable rows={defender.settings.map(s => [s.name, s.value] as [string, React.ReactNode])} />
+        </div>
+      )}
+
+      {/* Steps */}
+      {defender.steps?.length > 0 && (
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: 'var(--text3)' }}>Implementation steps</div>
+          <StepList steps={defender.steps} />
+        </div>
+      )}
+
+      {/* PowerShell */}
+      {defender.powershell && (
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>PowerShell (Exchange Online / Defender)</div>
+          <CodeBlock code={defender.powershell} />
+        </div>
+      )}
+
+      {/* Graph API */}
+      {defender.graph_api && (
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Graph API</div>
+          <CodeBlock code={defender.graph_api} lang="http" />
+        </div>
+      )}
+
+      {/* Notes */}
+      {defender.notes && <InfoBox>{defender.notes}</InfoBox>}
     </div>
   );
 }
@@ -219,8 +319,16 @@ function RollbackTab({ result }: { result: GuideResult }) {
     const rb = result.scripts.rollback;
     return (
       <div className="space-y-3">
-        {[['Intune', rb.intune], ['GPO', rb.gpo], ...(rb.entra ? [['Entra ID', rb.entra]] : [])].map(([label, val]) => (
-          <div key={label}><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>{label}</div><div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>{val}</div></div>
+        {[
+          ['Intune', rb.intune],
+          ['GPO', rb.gpo],
+          ...(rb.entra ? [['Entra ID', rb.entra]] : []),
+          ...(rb.defender ? [['Defender', rb.defender]] : []),
+        ].filter(([, v]) => v).map(([label, val]) => (
+          <div key={label as string}>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>{label}</div>
+            <div className="text-sm rounded-lg p-2.5 leading-relaxed" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>{val}</div>
+          </div>
         ))}
         {rb.powershell && <div><div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text3)' }}>Rollback script</div><CodeBlock code={rb.powershell} /></div>}
       </div>
@@ -237,8 +345,10 @@ function RollbackTab({ result }: { result: GuideResult }) {
 function RisksTab({ result }: { result: GuideResult }) {
   return (
     <div className="space-y-2">
-      {(result.user_impact === 'High' || result.user_impact === 'Medium') && <WarnBox><strong>User impact: {result.user_impact}</strong> — Test in a pilot group before broad deployment.</WarnBox>}
-      {result.risks.map((r, i) => <WarnBox key={i}>{r}</WarnBox>)}
+      {(result.user_impact === 'High' || result.user_impact === 'Medium') && (
+        <WarnBox><strong>User impact: {result.user_impact}</strong> — Test in a pilot group before broad deployment.</WarnBox>
+      )}
+      {(result.risks || []).map((r, i) => <WarnBox key={i}>{r}</WarnBox>)}
       <InfoBox>Always validate settings against official Microsoft Learn documentation before production deployment.</InfoBox>
     </div>
   );
@@ -247,7 +357,7 @@ function RisksTab({ result }: { result: GuideResult }) {
 function RefsTab({ result }: { result: GuideResult }) {
   return (
     <div className="space-y-2">
-      {result.references.map((ref, i) => (
+      {(result.references || []).map((ref, i) => (
         <a key={i} href={ref.url} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-3 p-2.5 rounded-lg transition-colors"
           style={{ border: '1px solid var(--border)' }}>
@@ -266,28 +376,30 @@ function RefsTab({ result }: { result: GuideResult }) {
 }
 
 function buildMarkdown(query: string, r: GuideResult): string {
-  const scriptSection = r.scripts ? [
-    `## PowerShell — Detection`, '```powershell', r.scripts.detection, '```', ``,
-    `## PowerShell — Implementation`, '```powershell', r.scripts.implementation, '```', ``,
-    `## PowerShell — Validation`, '```powershell', r.scripts.validation, '```', ``,
-  ] : ['## PowerShell Scripts', 'Not yet generated — click the Scripts tab to generate.', ``];
+  const defenderSection = r.defender?.applicable ? [
+    `## Microsoft Defender`,
+    `**Product:** ${r.defender.product}`,
+    r.defender.portal_path ? `**Portal path:** ${r.defender.portal_path}` : '',
+    r.defender.policy_name ? `**Policy:** ${r.defender.policy_name}` : '',
+    ``,
+    ...(r.defender.steps || []).map((s, i) => `${i + 1}. ${s}`),
+  ] : ['## Microsoft Defender', 'Not applicable.'];
 
   return [
     `# Secure Score: ${query}`, ``,
     `**Confidence:** ${r.confidence} | **User Impact:** ${r.user_impact} | **Category:** ${r.category}`, ``,
     `## Summary`, r.summary, ``,
-    `## Intune`, `**Method:** ${r.intune.method}`,
-    r.intune.settings_path ? `**Path:** \`${r.intune.settings_path}\`` : '',
-    r.intune.oma_uri ? `**OMA-URI:** \`${r.intune.oma_uri}\`` : '', ``,
-    ...r.intune.steps.map((s, i) => `${i + 1}. ${s}`), ``,
+    `## Intune`, `**Method:** ${r.intune?.method}`,
+    r.intune?.settings_path ? `**Path:** \`${r.intune.settings_path}\`` : '',
+    ``, ...(r.intune?.steps || []).map((s, i) => `${i + 1}. ${s}`), ``,
     `## Group Policy`,
-    r.gpo.policy_path ? `**Path:** \`${r.gpo.policy_path}\`` : '',
-    r.gpo.setting_name ? `**Setting:** ${r.gpo.setting_name} = ${r.gpo.value}` : '', ``,
-    ...r.gpo.steps.map((s, i) => `${i + 1}. ${s}`), ``,
-    `## Entra ID`, r.entra?.applicable ? [...(r.entra.steps || []).map((s, i) => `${i + 1}. ${s}`)].join('\n') : 'Not applicable.', ``,
-    ...scriptSection,
-    `## Validation`, ...r.validation_steps.map((s, i) => `${i + 1}. ${s}`), ``,
-    `## Risks`, ...r.risks.map(x => `- ⚠ ${x}`), ``,
-    `## References`, ...r.references.map(x => `- [${x.title}](${x.url})`),
-  ].filter(Boolean).join('\n');
+    r.gpo?.policy_path ? `**Path:** \`${r.gpo.policy_path}\`` : '',
+    ``, ...(r.gpo?.steps || []).map((s, i) => `${i + 1}. ${s}`), ``,
+    `## Entra ID`, r.entra?.applicable ? (r.entra.steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n') : 'Not applicable.', ``,
+    ...defenderSection, ``,
+    r.scripts ? [`## PowerShell — Detection`, '```powershell', r.scripts.detection, '```', ``, `## PowerShell — Implementation`, '```powershell', r.scripts.implementation, '```', ``].join('\n') : '## PowerShell Scripts\nNot yet generated.',
+    `## Validation`, ...(r.validation_steps || []).map((s, i) => `${i + 1}. ${s}`), ``,
+    `## Risks`, ...(r.risks || []).map(x => `- ⚠ ${x}`), ``,
+    `## References`, ...(r.references || []).map(x => `- [${x.title}](${x.url})`),
+  ].filter(x => x !== null && x !== undefined).join('\n');
 }

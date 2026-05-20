@@ -18,12 +18,6 @@ export interface GPOConfig {
   registry_data: string | null;
 }
 
-export interface PowerShellScripts {
-  detection: string;
-  implementation: string;
-  validation: string;
-}
-
 export interface EntraConfig {
   applicable: boolean;
   steps: string[];
@@ -37,10 +31,23 @@ export interface EntraConfig {
   notes: string | null;
 }
 
+export interface DefenderConfig {
+  applicable: boolean;
+  product: string | null;           // e.g. "Defender for Office 365", "Defender for Endpoint"
+  portal_path: string | null;       // e.g. "security.microsoft.com > Email & collaboration > Policies"
+  steps: string[];
+  policy_name: string | null;       // e.g. "Anti-phishing policy"
+  settings: { name: string; value: string }[];
+  powershell: string | null;        // Exchange Online / Defender PowerShell
+  graph_api: string | null;
+  notes: string | null;
+}
+
 export interface Rollback {
   intune: string;
   gpo: string;
   entra: string | null;
+  defender: string | null;
   powershell: string;
 }
 
@@ -67,10 +74,10 @@ export interface GuideResult {
   intune: IntuneConfig;
   gpo: GPOConfig;
   entra: EntraConfig;
+  defender: DefenderConfig;
   validation_steps: string[];
   risks: string[];
   references: Reference[];
-  // Scripts loaded on demand
   scripts?: ScriptsResult;
 }
 

@@ -40,11 +40,35 @@ Respond ONLY with raw JSON (no markdown, no fences):
     "powershell": null,
     "notes": null
   },
+  "defender": {
+    "applicable": false,
+    "product": null,
+    "portal_path": null,
+    "steps": [],
+    "policy_name": null,
+    "settings": [],
+    "powershell": null,
+    "graph_api": null,
+    "notes": null
+  },
   "validation_steps": ["step 1","step 2"],
   "risks": ["risk 1"],
   "references": [{"title":"title","url":"https://learn.microsoft.com/...","type":"Official Docs"}]
 }
-For identity/MFA/Entra recommendations set entra.applicable=true and fill in the entra fields.
+
+DEFENDER FIELD RULES:
+- Set defender.applicable=true when the recommendation involves: Defender for Office 365, Defender for Endpoint policies, Defender for Cloud Apps, Microsoft 365 Defender portal settings, anti-phishing policies, safe links, safe attachments, anti-spam, attack simulation, threat policies
+- defender.product: exact product name e.g. "Defender for Office 365", "Defender for Endpoint", "Microsoft 365 Defender"
+- defender.portal_path: exact navigation e.g. "security.microsoft.com > Policies & rules > Threat policies > Anti-phishing"
+- defender.steps: exact step-by-step portal configuration steps
+- defender.policy_name: the specific policy being configured e.g. "Default anti-phishing policy"
+- defender.settings: array of {name, value} for each setting to configure
+- defender.powershell: Exchange Online PowerShell or Defender PowerShell commands if applicable
+
+ENTRA FIELD RULES:
+- Set entra.applicable=true for: MFA, Conditional Access, authentication methods, identity protection, SSPR, password policies
+
+For endpoint-only recommendations keep both defender.applicable=false and entra.applicable=false.
 CRITICAL: Valid complete JSON only. Max 3 steps per section.`;
 
 const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate specific, production-safe PowerShell scripts for Intune deployment.
@@ -58,15 +82,11 @@ Respond ONLY with raw JSON, no markdown, no code fences:
     "intune": "one sentence: how to revert in Intune",
     "gpo": "one sentence: how to revert via GPO",
     "entra": null,
+    "defender": null,
     "powershell": "# Rollback script - reverts the change\\n<full script 15-20 lines>"
   }
 }
-Rules:
-- Scripts MUST be specific to the exact recommendation - not generic
-- Include proper try/catch error handling
-- Detection MUST exit 0 (compliant) or 1 (non-compliant) only
-- Use $ErrorActionPreference and Write-Output for logging
-- CRITICAL: Valid complete JSON only`;
+Rules: specific to the exact recommendation, try/catch error handling, exit 0/1 for detection, max 30 lines each, complete valid JSON.`;
 
 module.exports = async function handler(req, res) {
   setCors(res);
@@ -88,12 +108,19 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, scripts });
     }
 
-    const isIdentity = /mfa|auth|entra|identity|password|conditional|azure ad|sign.in/i.test(q);
+    const isIdentity = /mfa|auth|entra|identity|password|conditional|azure ad|sign.?in/i.test(q);
+    const isDefender = /defender|office 365|anti.?phish|safe link|safe attach|anti.?spam|threat polic|attack sim|cloud app|365 defender|atp|mdо/i.test(q);
+
     const result = await callGemini(
-      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune, GPO${isIdentity ? ', and Entra ID' : ''}. Concise JSON only.`,
+      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune and GPO steps${isIdentity ? ', Entra ID configuration' : ''}${isDefender ? ', and Microsoft Defender portal configuration' : ''}. If this involves Defender for Office 365 or Microsoft 365 Defender portal settings, include full portal navigation and policy configuration steps. Concise JSON only.`,
       GUIDE_SYSTEM,
-      2000
+      2500
     );
+
+    // Ensure defender field exists with defaults if AI omitted it
+    if (!result.defender) {
+      result.defender = { applicable: false, product: null, portal_path: null, steps: [], policy_name: null, settings: [], powershell: null, graph_api: null, notes: null };
+    }
 
     res.status(200).json({ ok: true, result });
   } catch (err) {
