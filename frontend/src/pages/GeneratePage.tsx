@@ -145,9 +145,20 @@ export function GeneratePage({
       {error && !loading && (
         <div className="mb-4">
           <WarnBox>
-            <strong>Error:</strong> {error}
-            {error.includes('Rate limit') && ' — Wait 60 seconds and try again.'}
+            <strong>{error.includes('busy') || error.includes('Rate limit') ? '⏱ Rate limit reached' : 'Error'}:</strong>{' '}
+            {error.includes('busy') || error.includes('Rate limit')
+              ? 'Gemini free tier allows 15 requests/minute. Wait 60 seconds then try again — or click Generate again now to retry.'
+              : error}
           </WarnBox>
+          {(error.includes('busy') || error.includes('Rate limit')) && (
+            <div className="mt-2 flex justify-end">
+              <button onClick={() => { setError(''); handleGenerate(); }}
+                className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg text-white"
+                style={{ background: 'var(--acc)' }}>
+                Retry now
+              </button>
+            </div>
+          )}
         </div>
       )}
 

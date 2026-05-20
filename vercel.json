@@ -7,5 +7,10 @@
     { "source": "/api/generate", "destination": "/api/generate.js" },
     { "source": "/api/script", "destination": "/api/script.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/generate.js": { "maxDuration": 60 },
+    "api/script.js":   { "maxDuration": 60 },
+    "api/health.js":   { "maxDuration": 10 }
+  }
 }

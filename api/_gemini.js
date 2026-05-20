@@ -24,9 +24,17 @@ function repairJSON(raw) {
 }
 
 async function callGemini(prompt, systemPrompt, maxTokens) {
-  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
+  // Try multiple models — if one is rate limited, fall through to the next
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-2.5-flash',
+  ];
+
+  let lastError = null;
+
   for (const modelName of models) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const model = genAI.getGenerativeModel({
           model: modelName,
@@ -40,16 +48,56 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
         const result = await model.generateContent(prompt);
         return repairJSON(result.response.text());
       } catch (err) {
-        const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('Too Many'));
-        const is404 = err.message && (err.message.includes('404') || err.message.includes('not found'));
-        if (is404) break;
-        if (is429 && attempt < 3) { await sleep(attempt * 15000); continue; }
-        if (is429 && attempt === 3) break;
+        lastError = err;
+        const is429 = err.message && (
+          err.message.includes('429') ||
+          err.message.includes('quota') ||
+          err.message.includes('Too Many') ||
+          err.message.includes('RESOURCE_EXHAUSTED')
+        );
+        const is404 = err.message && (
+          err.message.includes('404') ||
+          err.message.includes('not found')
+        );
+
+        if (is404) {
+          // Model not available — try next model immediately
+          console.log(`${modelName} not available, trying next...`);
+          break;
+        }
+
+        if (is429) {
+          if (attempt === 1) {
+            // Wait 8 seconds then retry same model once
+            console.log(`${modelName} rate limited, waiting 8s...`);
+            await sleep(8000);
+            continue;
+          } else {
+            // Still limited — move to next model
+            console.log(`${modelName} still rate limited, trying next model...`);
+            break;
+          }
+        }
+
+        // Non-rate-limit error — throw immediately
         throw err;
       }
     }
   }
-  throw new Error('Rate limit reached. Please wait 1 minute and try again.');
+
+  // All models exhausted
+  const isRateLimit = lastError?.message && (
+    lastError.message.includes('429') ||
+    lastError.message.includes('quota') ||
+    lastError.message.includes('Too Many') ||
+    lastError.message.includes('RESOURCE_EXHAUSTED')
+  );
+
+  if (isRateLimit) {
+    throw new Error('RATE_LIMIT');
+  }
+
+  throw lastError || new Error('All models failed. Please try again.');
 }
 
 function setCors(res) {

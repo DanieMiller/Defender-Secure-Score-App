@@ -98,6 +98,9 @@ module.exports = async function handler(req, res) {
     res.status(200).json({ ok: true, result });
   } catch (err) {
     console.error('Generate error:', err.message);
+    if (err.message === 'RATE_LIMIT') {
+      return res.status(429).json({ error: 'Gemini is busy right now. Please wait 60 seconds and try again.' });
+    }
     res.status(500).json({ error: err.message || 'Internal server error' });
   }
 };
