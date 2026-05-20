@@ -24,10 +24,11 @@ function repairJSON(raw) {
 }
 
 async function callGemini(prompt, systemPrompt, maxTokens) {
-  // Try multiple models — if one is rate limited, fall through to the next
+  // Ordered by reliability — stable releases first, previews as last resort
   const models = [
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
+    'gemini-2.0-flash-001',
     'gemini-2.5-flash',
   ];
 
@@ -36,6 +37,7 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
   for (const modelName of models) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
+        console.log(`Trying ${modelName} (attempt ${attempt})...`);
         const model = genAI.getGenerativeModel({
           model: modelName,
           systemInstruction: systemPrompt,
@@ -46,57 +48,45 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
           },
         });
         const result = await model.generateContent(prompt);
+        console.log(`Success with ${modelName}`);
         return repairJSON(result.response.text());
       } catch (err) {
         lastError = err;
-        const is429 = err.message && (
-          err.message.includes('429') ||
-          err.message.includes('quota') ||
-          err.message.includes('Too Many') ||
-          err.message.includes('RESOURCE_EXHAUSTED')
-        );
-        const is404 = err.message && (
-          err.message.includes('404') ||
-          err.message.includes('not found')
-        );
+        const msg = err.message || '';
+        const is429  = msg.includes('429') || msg.includes('quota') || msg.includes('Too Many') || msg.includes('RESOURCE_EXHAUSTED');
+        const is503  = msg.includes('503') || msg.includes('Service Unavailable') || msg.includes('overloaded') || msg.includes('high demand');
+        const is404  = msg.includes('404') || msg.includes('not found');
+        const isRetry = is429 || is503;
 
         if (is404) {
-          // Model not available — try next model immediately
           console.log(`${modelName} not available, trying next...`);
-          break;
+          break; // try next model
         }
 
-        if (is429) {
-          if (attempt === 1) {
-            // Wait 8 seconds then retry same model once
-            console.log(`${modelName} rate limited, waiting 8s...`);
-            await sleep(8000);
-            continue;
-          } else {
-            // Still limited — move to next model
-            console.log(`${modelName} still rate limited, trying next model...`);
-            break;
-          }
+        if (isRetry && attempt === 1) {
+          const wait = is503 ? 5000 : 8000; // 503 = brief wait, 429 = longer
+          console.log(`${modelName} unavailable (${is503 ? '503' : '429'}), waiting ${wait/1000}s...`);
+          await sleep(wait);
+          continue; // retry same model once
         }
 
-        // Non-rate-limit error — throw immediately
+        if (isRetry && attempt === 2) {
+          console.log(`${modelName} still unavailable, trying next model...`);
+          break; // move to next model
+        }
+
+        // Non-retryable error — throw immediately
         throw err;
       }
     }
   }
 
-  // All models exhausted
-  const isRateLimit = lastError?.message && (
-    lastError.message.includes('429') ||
-    lastError.message.includes('quota') ||
-    lastError.message.includes('Too Many') ||
-    lastError.message.includes('RESOURCE_EXHAUSTED')
-  );
+  const msg = lastError?.message || '';
+  const isRateLimit = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+  const isOverloaded = msg.includes('503') || msg.includes('overloaded') || msg.includes('high demand');
 
-  if (isRateLimit) {
-    throw new Error('RATE_LIMIT');
-  }
-
+  if (isRateLimit) throw new Error('RATE_LIMIT');
+  if (isOverloaded) throw new Error('OVERLOADED');
   throw lastError || new Error('All models failed. Please try again.');
 }
 

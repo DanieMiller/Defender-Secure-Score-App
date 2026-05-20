@@ -263,11 +263,13 @@ export function GeneratePage({
         <div className="mb-4">
           <WarnBox>
             <strong>{error.includes('busy') || error.includes('Rate limit') ? '⏱ Rate limit reached' : 'Error'}:</strong>{' '}
-            {error.includes('busy') || error.includes('Rate limit')
-              ? 'Gemini free tier allows 15 requests/minute. Wait 60 seconds then try again.'
+            {error.includes('busy') || error.includes('rate limit') || error.includes('Rate limit')
+              ? 'Gemini rate limit reached (15 requests/minute). Wait 60 seconds then try again.'
+              : error.includes('high demand') || error.includes('503') || error.includes('unavailable')
+              ? 'Gemini is experiencing high demand right now. Wait 30 seconds then try again.'
               : error}
           </WarnBox>
-          {(error.includes('busy') || error.includes('Rate limit')) && (
+          {(error.includes('busy') || error.includes('Rate limit') || error.includes('rate limit') || error.includes('high demand') || error.includes('503') || error.includes('unavailable')) && (
             <div className="mt-2 flex justify-end">
               <button onClick={() => { setError(''); handleGenerate(); }}
                 className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg text-white"

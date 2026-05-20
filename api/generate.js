@@ -177,7 +177,10 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error('Generate error:', err.message);
     if (err.message === 'RATE_LIMIT') {
-      return res.status(429).json({ error: 'Gemini is busy right now. Please wait 60 seconds and try again.' });
+      return res.status(429).json({ error: 'Gemini rate limit reached. Please wait 60 seconds and try again.' });
+    }
+    if (err.message === 'OVERLOADED') {
+      return res.status(503).json({ error: 'Gemini is experiencing high demand right now. Please try again in 30 seconds.' });
     }
     res.status(500).json({ error: err.message || 'Internal server error' });
   }
