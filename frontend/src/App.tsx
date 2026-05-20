@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
+import { LoginPage } from './pages/LoginPage';
 import { Sun, Moon } from 'lucide-react';
 import type { GuideResult, ScriptsResult } from './types';
 import { GeneratePage } from './pages/GeneratePage';
@@ -19,6 +21,9 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function App() {
+  const { isLoggedIn, logout } = useAuth();
+  if (!isLoggedIn) return <LoginPage />;
+
   const [tab, setTab] = useState<Tab>('generate');
   const [current, setCurrent] = useState<{ query: string; result: GuideResult; cached?: boolean } | null>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
@@ -137,6 +142,14 @@ export default function App() {
                 onMouseLeave={e => (e.currentTarget.style.color = '#A0A8B8')}
                 title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
                 {dark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+
+              {/* Logout */}
+              <button onClick={logout}
+                className="ml-1 text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
+                style={{ border: '1px solid rgba(217,134,28,0.3)', color: '#d9861c' }}
+                title="Sign out">
+                Sign out
               </button>
             </nav>
           </div>

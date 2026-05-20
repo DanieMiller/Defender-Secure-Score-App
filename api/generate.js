@@ -1,3 +1,4 @@
+const { requireAuth } = require('./_auth');
 const { callGemini, setCors } = require('./_gemini');
 const { existsSync, readFileSync } = require('fs');
 const { join } = require('path');
@@ -117,6 +118,8 @@ module.exports = async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!requireAuth(req, res)) return;
 
   const { query, includeScripts } = req.body || {};
   if (!query || !query.trim()) return res.status(400).json({ error: 'query is required' });
