@@ -1,0 +1,14 @@
+{
+  "name": "securescore-pregenerate",
+  "version": "1.0.0",
+  "description": "Pre-generate all Defender Secure Score recommendations",
+  "type": "module",
+  "scripts": {
+    "generate": "node pregenerate.js",
+    "generate:resume": "node pregenerate.js --start",
+    "status": "node -e \"import('./cache/recommendations-cache.json', {assert:{type:'json'}}).then(m=>console.log('Cached:',Object.keys(m.default).length,'/ 281'))\""
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0"
+  }
+}

@@ -20,7 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('generate');
-  const [current, setCurrent] = useState<{ query: string; result: GuideResult } | null>(null);
+  const [current, setCurrent] = useState<{ query: string; result: GuideResult; cached?: boolean } | null>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
   const history = useHistory();
   const favorites = useFavorites();
@@ -30,8 +30,8 @@ export default function App() {
     document.documentElement.classList.toggle('light', !dark);
   }, [dark]);
 
-  const handleResult = useCallback((query: string, result: GuideResult) => {
-    setCurrent({ query, result });
+  const handleResult = useCallback((query: string, result: GuideResult, cached?: boolean) => {
+    setCurrent({ query, result, cached });
     history.add(query, result.confidence);
     setTab('generate');
   }, [history]);
@@ -173,6 +173,7 @@ export default function App() {
             onResult={handleResult}
             onScriptsLoaded={handleScriptsLoaded}
             savedResult={current}
+            cachedResult={current?.cached}
             isFav={current ? favorites.has(current.query) : false}
             onFav={handleFav}
             onEmailTemplate={handleEmailTemplate}

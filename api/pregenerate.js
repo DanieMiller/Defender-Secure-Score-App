@@ -1,0 +1,34 @@
+const { callGemini, setCors } = require('./_gemini');
+
+const GUIDE_SYSTEM = `You are a Microsoft security expert. Generate Defender Secure Score implementation guides. Respond ONLY with raw JSON (no markdown):
+{"confidence":"High|Medium|Low","summary":"1-2 sentences","category":"string","affected_os":["Windows 10","Windows 11"],"user_impact":"Low|Medium|High","platforms":["Windows"],"intune":{"method":"string","steps":["s1","s2","s3"],"settings_path":null,"oma_uri":null,"data_type":null,"value":"string"},"gpo":{"steps":["s1","s2"],"policy_path":"string","setting_name":"string","value":"string","admx":null,"registry_key":null,"registry_value":null,"registry_data":null},"entra":{"applicable":false,"steps":[],"portal_path":null,"policy_type":null,"settings":[],"conditional_access":false,"ca_policy_name":null,"graph_api":null,"powershell":null,"notes":null},"defender":{"applicable":false,"product":null,"portal_path":null,"steps":[],"policy_name":null,"settings":[],"powershell":null,"graph_api":null,"notes":null},"validation_steps":["s1","s2"],"risks":["r1"],"references":[{"title":"t","url":"https://learn.microsoft.com/...","type":"Official Docs"}]}
+entra.applicable=true for MFA/identity/Conditional Access. defender.applicable=true for Defender products. Max 3 steps. Valid JSON only.`;
+
+module.exports = async function handler(req, res) {
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { query } = req.body || {};
+  if (!query || !query.trim()) return res.status(400).json({ error: 'query is required' });
+
+  const q = query.trim();
+  const isId = /mfa|auth|entra|identity|password|conditional|azure ad|sign.?in/i.test(q);
+  const isDef = /defender|office 365|anti.?phish|safe link|safe attach|anti.?spam|threat polic|attack sim|cloud app|365 defender/i.test(q);
+  const extra = (isId ? ', Entra ID' : '') + (isDef ? ', Defender portal' : '');
+
+  try {
+    const result = await callGemini(
+      `Implementation guide for: "${q}". Include Intune, GPO${extra}. JSON only.`,
+      GUIDE_SYSTEM,
+      800
+    );
+    if (!result.defender) {
+      result.defender = { applicable: false, product: null, portal_path: null, steps: [], policy_name: null, settings: [], powershell: null, graph_api: null, notes: null };
+    }
+    res.status(200).json({ ok: true, result });
+  } catch (err) {
+    if (err.message === 'RATE_LIMIT') return res.status(429).json({ error: 'RATE_LIMIT' });
+    res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+};

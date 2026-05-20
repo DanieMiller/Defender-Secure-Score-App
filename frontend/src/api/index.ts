@@ -2,7 +2,12 @@ import type { GuideResult, ScriptsResult } from '../types';
 
 const API_BASE = '/api';
 
-export async function generateGuide(query: string): Promise<GuideResult> {
+export interface GenerateResponse {
+  result: GuideResult;
+  cached: boolean;
+}
+
+export async function generateGuide(query: string): Promise<GenerateResponse> {
   const res = await fetch(`${API_BASE}/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -10,7 +15,7 @@ export async function generateGuide(query: string): Promise<GuideResult> {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
-  return data.result as GuideResult;
+  return { result: data.result as GuideResult, cached: data.cached === true };
 }
 
 export async function generateScripts(query: string): Promise<ScriptsResult> {

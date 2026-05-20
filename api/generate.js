@@ -1,5 +1,54 @@
 const { callGemini, setCors } = require('./_gemini');
+const { existsSync, readFileSync } = require('fs');
+const { join } = require('path');
 
+// ── Cache loader ──────────────────────────────────────────────────────────────
+// Loads the pre-generated cache from recommendations-cache.json if it exists.
+// The cache is a flat object: { "recommendation text": { result, generatedAt } }
+let _cache = null;
+function getCache() {
+  if (_cache !== null) return _cache;
+  const cachePath = join(__dirname, 'recommendations-cache.json');
+  if (existsSync(cachePath)) {
+    try {
+      _cache = JSON.parse(readFileSync(cachePath, 'utf8'));
+      console.log(`Cache loaded: ${Object.keys(_cache).length} recommendations`);
+    } catch (e) {
+      console.warn('Cache load failed:', e.message);
+      _cache = {};
+    }
+  } else {
+    _cache = {};
+  }
+  return _cache;
+}
+
+// Fuzzy match — find the closest recommendation in the cache
+// Tries exact match first, then case-insensitive, then partial word match
+function findInCache(query, cache) {
+  const keys = Object.keys(cache);
+  if (!keys.length) return null;
+
+  const q = query.trim();
+
+  // 1. Exact match
+  if (cache[q]) return cache[q].result;
+
+  // 2. Case-insensitive exact match
+  const qLower = q.toLowerCase();
+  const exact = keys.find(k => k.toLowerCase() === qLower);
+  if (exact) return cache[exact].result;
+
+  // 3. Cache key contains query or query contains cache key (trimmed)
+  const contains = keys.find(k =>
+    k.toLowerCase().includes(qLower) || qLower.includes(k.toLowerCase())
+  );
+  if (contains) return cache[contains].result;
+
+  return null;
+}
+
+// ── System prompts ────────────────────────────────────────────────────────────
 const GUIDE_SYSTEM = `You are a Microsoft security expert. Generate concise Defender Secure Score implementation guides.
 
 Respond ONLY with raw JSON (no markdown, no fences):
@@ -55,21 +104,9 @@ Respond ONLY with raw JSON (no markdown, no fences):
   "risks": ["risk 1"],
   "references": [{"title":"title","url":"https://learn.microsoft.com/...","type":"Official Docs"}]
 }
-
-DEFENDER FIELD RULES:
-- Set defender.applicable=true when the recommendation involves: Defender for Office 365, Defender for Endpoint policies, Defender for Cloud Apps, Microsoft 365 Defender portal settings, anti-phishing policies, safe links, safe attachments, anti-spam, attack simulation, threat policies
-- defender.product: exact product name e.g. "Defender for Office 365", "Defender for Endpoint", "Microsoft 365 Defender"
-- defender.portal_path: exact navigation e.g. "security.microsoft.com > Policies & rules > Threat policies > Anti-phishing"
-- defender.steps: exact step-by-step portal configuration steps
-- defender.policy_name: the specific policy being configured e.g. "Default anti-phishing policy"
-- defender.settings: array of {name, value} for each setting to configure
-- defender.powershell: Exchange Online PowerShell or Defender PowerShell commands if applicable
-
-ENTRA FIELD RULES:
-- Set entra.applicable=true for: MFA, Conditional Access, authentication methods, identity protection, SSPR, password policies
-
-For endpoint-only recommendations keep both defender.applicable=false and entra.applicable=false.
-CRITICAL: Valid complete JSON only. Max 3 steps per section.`;
+Set entra.applicable=true for MFA/Conditional Access/identity recommendations.
+Set defender.applicable=true for Defender for Office 365/Endpoint/Cloud Apps recommendations.
+CRITICAL: Valid complete JSON. Max 3 steps per section.`;
 
 const SCRIPTS_SYSTEM = `You are a Microsoft PowerShell expert. Generate specific, production-safe PowerShell scripts for Intune deployment.
 
@@ -88,6 +125,7 @@ Respond ONLY with raw JSON, no markdown, no code fences:
 }
 Rules: specific to the exact recommendation, try/catch error handling, exit 0/1 for detection, max 30 lines each, complete valid JSON.`;
 
+// ── Handler ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -99,6 +137,7 @@ module.exports = async function handler(req, res) {
   const q = query.trim();
 
   try {
+    // ── Scripts request (always goes to AI — no cache for scripts) ──────────
     if (includeScripts) {
       const scripts = await callGemini(
         `Generate specific PowerShell scripts for this Defender Secure Score recommendation: "${q}". Detection (exit 0/1), implementation (applies the fix), validation, and rollback scripts. Make them specific to this recommendation, not generic templates.`,
@@ -108,21 +147,33 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, scripts });
     }
 
+    // ── Check cache first ───────────────────────────────────────────────────
+    const cache = getCache();
+    const cached = findInCache(q, cache);
+
+    if (cached) {
+      console.log(`Cache HIT: ${q}`);
+      return res.status(200).json({ ok: true, result: cached, cached: true });
+    }
+
+    console.log(`Cache MISS: ${q} — calling Gemini`);
+
+    // ── Cache miss — call Gemini ────────────────────────────────────────────
     const isIdentity = /mfa|auth|entra|identity|password|conditional|azure ad|sign.?in/i.test(q);
-    const isDefender = /defender|office 365|anti.?phish|safe link|safe attach|anti.?spam|threat polic|attack sim|cloud app|365 defender|atp|mdо/i.test(q);
+    const isDefender = /defender|office 365|anti.?phish|safe link|safe attach|anti.?spam|threat polic|attack sim|cloud app|365 defender|atp/i.test(q);
 
     const result = await callGemini(
-      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune and GPO steps${isIdentity ? ', Entra ID configuration' : ''}${isDefender ? ', and Microsoft Defender portal configuration' : ''}. If this involves Defender for Office 365 or Microsoft 365 Defender portal settings, include full portal navigation and policy configuration steps. Concise JSON only.`,
+      `Implementation guide for Defender Secure Score recommendation: "${q}". Include Intune and GPO steps${isIdentity ? ', Entra ID configuration' : ''}${isDefender ? ', and Microsoft Defender portal configuration' : ''}. Concise JSON only.`,
       GUIDE_SYSTEM,
       2500
     );
 
-    // Ensure defender field exists with defaults if AI omitted it
     if (!result.defender) {
       result.defender = { applicable: false, product: null, portal_path: null, steps: [], policy_name: null, settings: [], powershell: null, graph_api: null, notes: null };
     }
 
-    res.status(200).json({ ok: true, result });
+    res.status(200).json({ ok: true, result, cached: false });
+
   } catch (err) {
     console.error('Generate error:', err.message);
     if (err.message === 'RATE_LIMIT') {
