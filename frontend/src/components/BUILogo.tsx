@@ -7,67 +7,50 @@ interface BUILogoProps {
 }
 
 // Exact BUI logo from screenshot:
-// Square amber box with "BUI" letters inside + "INNOVATION / DELIVERY / RESULTS" text to the right
+// Grey rectangle | amber "B" | white divider | amber "UI" | white divider | white "INNOVATION DELIVERY RESULTS"
 export function BUILogo({ className = '', style, compact = false }: BUILogoProps) {
-  return (
-    <div className={`flex items-center gap-2 ${className}`} style={style}>
-      {/* Square amber icon box - matches screenshot exactly */}
-      <div style={{
-        width: 44,
-        height: 44,
-        background: '#F5A000',
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <svg viewBox="0 0 44 44" width="44" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* B */}
-          <path
-            d="M8 10h7.5c2.8 0 4.8 1.6 4.8 4 0 1.5-.75 2.7-2 3.3 1.6.6 2.7 2 2.7 3.7 0 2.7-2.1 4.8-5.2 4.8H8V10zm3 6.5h4c1.2 0 2-.75 2-1.9S16.2 12.8 15 12.8H11V16.5zm0 7.2H15.2c1.4 0 2.3-.85 2.3-2.1S16.6 19.5 15.2 19.5H11v4.2z"
-            fill="#1A1C24"
-          />
-          {/* U */}
-          <path
-            d="M23 10v9.8c0 2.3 1.2 3.7 3.3 3.7s3.3-1.4 3.3-3.7V10H33v10c0 4-2.5 6.5-6.7 6.5S19.6 24 19.6 20V10H23z"
-            fill="#1A1C24"
-          />
-          {/* I */}
-          <path d="M35 10h3.2v15.8H35V10z" fill="#1A1C24" />
-          {/* Three dots */}
-          <circle cx="8" cy="33" r="1.8" fill="#1A1C24" />
-          <circle cx="13.5" cy="33" r="1.8" fill="#1A1C24" />
-          <circle cx="19" cy="33" r="1.8" fill="#1A1C24" />
+  if (compact) {
+    // Just the square part without the text
+    return (
+      <div className={className} style={{ display: 'inline-flex', ...style }}>
+        <svg viewBox="0 0 56 40" width="56" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="56" height="40" rx="3" fill="#5A5A5A" />
+          {/* B in amber */}
+          <text x="7" y="28" fontSize="22" fontWeight="700" fill="#F5A000" fontFamily="Arial, sans-serif">B</text>
+          {/* White divider after B */}
+          <rect x="24" y="6" width="1.5" height="28" fill="white" />
+          {/* UI in amber */}
+          <text x="28" y="28" fontSize="22" fontWeight="700" fill="#F5A000" fontFamily="Arial, sans-serif">UI</text>
         </svg>
       </div>
+    );
+  }
 
-      {/* "INNOVATION / DELIVERY / RESULTS" text - matches screenshot */}
-      {!compact && (
-        <div style={{ lineHeight: 1.25 }}>
-          <div style={{
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            color: '#F5A000',
-            fontFamily: 'Inter, sans-serif',
-          }}>INNOVATION</div>
-          <div style={{
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            color: '#F5A000',
-            fontFamily: 'Inter, sans-serif',
-          }}>DELIVERY</div>
-          <div style={{
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            color: '#F5A000',
-            fontFamily: 'Inter, sans-serif',
-          }}>RESULTS</div>
-        </div>
-      )}
+  return (
+    <div className={className} style={{ display: 'inline-flex', ...style }}>
+      <svg viewBox="0 0 210 44" width="210" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Grey background rectangle */}
+        <rect width="210" height="44" rx="3" fill="#5A5A5A" />
+
+        {/* "B" in amber */}
+        <text x="9" y="31" fontSize="24" fontWeight="700" fill="#F5A000" fontFamily="Arial Black, Arial, sans-serif">B</text>
+
+        {/* White vertical divider after B */}
+        <rect x="31" y="7" width="2" height="30" fill="white" opacity="0.85" />
+
+        {/* "UI" in amber */}
+        <text x="36" y="31" fontSize="24" fontWeight="700" fill="#F5A000" fontFamily="Arial Black, Arial, sans-serif">UI</text>
+
+        {/* White vertical divider after UI */}
+        <rect x="72" y="7" width="2" height="30" fill="white" opacity="0.85" />
+
+        {/* "INNOVATION" */}
+        <text x="80" y="18" fontSize="8.5" fontWeight="400" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.5">INNOVATION</text>
+        {/* "DELIVERY" */}
+        <text x="80" y="28" fontSize="8.5" fontWeight="400" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.5">DELIVERY</text>
+        {/* "RESULTS" */}
+        <text x="80" y="38" fontSize="8.5" fontWeight="400" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.5">RESULTS</text>
+      </svg>
     </div>
   );
 }
