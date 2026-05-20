@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUI Secure Score Cache Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; background: #16181E; color: #f0f0f0; padding: 24px; font-size: 14px; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; color: #f0f0f0; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 24px; }
+  .card { background: #1E2028; border: 1px solid rgba(217,134,28,0.2); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .progress-wrap { height: 10px; border-radius: 5px; background: #2E3240; overflow: hidden; margin: 12px 0; }
+  .progress-fill { height: 100%; border-radius: 5px; background: #d9861c; transition: width 0.4s; width: 0%; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }
+  .stat { background: #252830; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 24px; font-weight: 600; color: #f0f0f0; }
+  .stat-lbl { font-size: 11px; color: #888; margin-top: 3px; }
+  .log { font-family: 'JetBrains Mono', monospace; font-size: 11px; max-height: 250px; overflow-y: auto; background: #0E1016; border-radius: 8px; padding: 12px; margin-top: 10px; line-height: 1.6; }
+  .ok  { color: #10b981; }
+  .err { color: #ef4444; }
+  .inf { color: #d9861c; }
+  .wrn { color: #f59e0b; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; border: 1px solid rgba(217,134,28,0.3); background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: #f0f0f0; margin-right: 8px; margin-top: 10px; transition: all 0.15s; }
+  .btn:hover { background: rgba(217,134,28,0.1); }
+  .btn-acc { background: #d9861c; color: #1a1a1a; border-color: #d9861c; font-weight: 600; }
+  .btn-acc:hover { background: #c4761a; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status { font-size: 13px; color: #888; margin: 8px 0; }
+  .note { font-size: 12px; color: #666; line-height: 1.7; margin-top: 12px; padding: 12px; background: #252830; border-radius: 8px; }
+  code { font-family: monospace; background: #2E3240; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #d9861c; }
+</style>
+</head>
+<body>
+
+<h1>🛡️ BUI Secure Score — Cache Generator</h1>
+<p class="sub">Generates all 281 Defender Secure Score recommendations via your own API. Runs directly on your app domain — no CORS issues.</p>
+
+<div class="card">
+  <div id="statusMsg" class="status">Ready — click Start to begin generating all 281 recommendations</div>
+  <div class="progress-wrap"><div class="progress-fill" id="bar"></div></div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="sDone">0</div><div class="stat-lbl">Generated</div></div>
+    <div class="stat"><div class="stat-num" id="sErr">0</div><div class="stat-lbl">Errors</div></div>
+    <div class="stat"><div class="stat-num" id="sLeft">281</div><div class="stat-lbl">Remaining</div></div>
+    <div class="stat"><div class="stat-num" id="sEta">—</div><div class="stat-lbl">ETA (min)</div></div>
+  </div>
+  <button class="btn btn-acc" onclick="toggle()" id="startBtn">▶ Start generation</button>
+  <button class="btn" onclick="dl()" id="dlBtn" disabled>⬇ Download cache.json</button>
+  <button class="btn" onclick="clearAll()">✕ Clear progress</button>
+  <div class="note">
+    ✅ This page runs on your own Vercel domain so there are no CORS issues.<br>
+    Progress saves automatically every 10 entries — safe to stop and resume.<br>
+    After download: copy <code>recommendations-cache.json</code> to <code>C:\TestApp\api\</code> then <code>git add . && git commit -m "add cache" && git push</code>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px">Generation log</div>
+  <div class="log" id="log">Waiting to start...</div>
+</div>
+
+<script>
+const RECS = ["Block use of copied or impersonated system tools","Identify Entra ID privileged accounts that are also privileged in Active Directory","Require LDAP server signing to ensure integrity of directory traffic","Disable NTLM authentication for Windows","Set User Account Control (UAC) to automatically deny elevation requests","Identify service accounts in privileged groups","Enforce LDAP channel binding to protect authentication sessions from interception","Require LDAP client signing to prevent tampering and protect directory authentication","Resolve unsecure domain configurations","Disable the local storage of passwords and credentials","Set 'Minimum PIN length for startup' to '6 or more characters'","Disable 'Password Manager'","Modify unsecure Kerberos delegations to prevent impersonation","Ensure Sign-in frequency is enabled and browser sessions are not persistent for Administrative users","Ensure additional storage providers are restricted in Outlook on the web","Ensure SharePoint Online data classification policies are set up and used","Enable Microsoft Defender for Storage","Do not expire passwords","Ensure that third party integrated applications are not allowed","Turn on sign-in risk policy","Turn on user risk policy","Ensure SharePoint Online Information Protection policies are enabled and used","Ensure 'Per-user MFA' is disabled","Enable Microsoft Defender for Resource Manager","Enable Microsoft Defender for Containers","Ensure modern authentication for SharePoint applications is required","Require MFA for Azure management","Ensure that Microsoft Defender for SQL servers on machines is set to On","Enable Microsoft Defender for SQL server virtual machines","Enable Microsoft Defender for App Service","Enable Microsoft Defender for Key Vault","Ensure Microsoft Authenticator is configured to show geographic location in push notifications","Enable Microsoft Defender for DNS","Ensure that Microsoft 365 Passwords Are Not Set to Expire","Ensure that Microsoft Defender for Databases plan is set to On","Ensure that Microsoft Defender for open-source relational databases plan is set to On","Enable Microsoft Defender for Azure Cosmos DB","Enable Microsoft Defender for APIs","Ensure multifactor authentication is enabled for all users in administrative roles","Ensure multifactor authentication is enabled for all users","Designate more than one global admin","Use least privileged administrative roles","Ensure 'Self service password reset enabled' is set to 'All'","Block users who reached the message limit","Set a daily message limit","Ensure Microsoft Defender Antivirus real-time protection is enabled","Turn on Microsoft Defender Antivirus email scanning","Enable Microsoft Defender Antivirus network protection","Turn on Microsoft Defender Antivirus potentially unwanted app blocking","Enable Microsoft Defender SmartScreen","Ensure Microsoft Defender for Endpoint EDR in block mode is enabled","Enable Microsoft Defender for Endpoint network protection","Configure Microsoft Defender for Endpoint attack surface reduction rules","Enable Microsoft Defender for Endpoint tamper protection","Ensure Microsoft Defender Antivirus cloud-delivered protection is enabled","Enable controlled folder access","Enable Microsoft Defender Application Guard","Enable Microsoft Defender Credential Guard","Disable Autoplay for all drives","Disable Solicited Remote Assistance","Disable Unsolicited Remote Assistance","Turn off Autoplay","Block untrusted and unsigned processes that run from USB","Enable Windows Hello for Business","Require Windows Hello for Business PIN","Disable Basic authentication for WinRM Client","Disable Basic authentication for WinRM Service","Disable digest authentication for WinRM Client","Require Kerberos authentication for WinRM","Enable Windows Defender Firewall for all network profiles","Block executable content from email client and webmail","Block executable files from running unless they meet a prevalence age or trusted list criteria","Block execution of potentially obfuscated scripts","Block JavaScript or VBScript from launching downloaded executable content","Block Office applications from creating executable content","Block Office applications from injecting code into other processes","Block Office communication application from creating child processes","Block all Office applications from creating child processes","Block Adobe Reader from creating child processes","Block credential stealing from the Windows local security authority subsystem","Block persistence through WMI event subscription","Block process creations originating from PSExec and WMI commands","Block untrusted or unsigned processes that run from USB","Use advanced protection against ransomware","Block Win32 API calls from Office macros","Disable 'Password reveal' button","Set minimum password length to 14 or more characters","Set account lockout duration to 15 or more minutes","Set account lockout threshold to 5 or fewer invalid logon attempts","Enable audit account logon events","Enable audit logon events","Enable audit object access","Enable audit policy change","Enable audit privilege use","Enable audit process tracking","Enable audit system events","Ensure 'Do not allow passwords to be saved' is set to Enabled for Remote Desktop Services","Ensure 'Set time limit for active but idle Remote Desktop Services sessions' is enabled","Ensure 'Do not delete temp folders upon exit' is set to Disabled","Ensure Windows Firewall is enabled","Disable anonymous enumeration of SAM accounts","Disable anonymous enumeration of shares","Disable SMB v1","Enable SMB signing","Disable NetBIOS over TCP/IP","Disable LLMNR","Disable WPAD","Disable IPv6","Require NTLMv2 session security","Disable the guest account","Rename the administrator account","Rename the guest account","Ensure 'Network access: Restrict anonymous access to Named Pipes and Shares' is set to Enabled","Ensure 'Network security: Do not store LAN Manager hash value on next password change' is set to Enabled","Ensure 'Network security: LAN Manager authentication level' is set to 'Send NTLMv2 response only. Refuse LM & NTLM'","Ensure 'User Account Control: Admin Approval Mode for the Built-in Administrator account' is set to Enabled","Ensure 'User Account Control: Behavior of the elevation prompt for administrators in Admin Approval Mode' is configured","Ensure 'User Account Control: Virtualize file and registry write failures to per-user locations' is set to Enabled","Disable Windows Script Host","Disable PowerShell 2.0","Enable PowerShell Script Block Logging","Enable PowerShell Transcription","Enable Windows Event Log","Configure Windows Event Log size","Ensure 'Configure Windows Defender SmartScreen' is set to Enabled","Ensure 'Turn off Autoplay' is set to Enabled for all drives","Enable Microsoft Defender Antivirus behavior monitoring","Ensure 'Configure Automatic Updates' is set to Enabled","Enable BitLocker drive encryption","Require additional authentication at startup for BitLocker","Set BitLocker encryption method","Enable Secure Boot","Enable host-based firewall","Disable USB storage","Enable Office 365 ATP Safe Links","Enable Office 365 ATP Safe Attachments","Configure anti-phishing policy in Microsoft Defender for Office 365","Enable Microsoft Defender for Office 365 anti-spam policies","Enable DKIM for all custom domains","Enable DMARC for all custom domains","Configure SPF records for all domains","Enable Microsoft Teams external access controls","Configure Microsoft Teams guest access","Enable Microsoft Teams meeting policies","Restrict Microsoft Teams app permissions","Enable audit logging for Microsoft Teams","Configure SharePoint external sharing settings","Restrict SharePoint Online access to managed devices","Enable SharePoint Online versioning","Configure OneDrive for Business sharing settings","Enable Microsoft 365 audit log search","Configure Microsoft 365 alert policies","Enable Microsoft 365 Defender auto-investigation and response","Configure Exchange Online spam filter policies","Enable Exchange Online malware filter","Configure Exchange Online connection filter","Enable Exchange Online Safe Attachments for SharePoint OneDrive and Teams","Enable Priority account protection in Microsoft Defender for Office 365","Configure Microsoft Defender for Office 365 attack simulation training","Enable Microsoft Defender for Identity","Configure Microsoft Defender for Identity sensors","Enable Microsoft Defender for Cloud Apps","Configure Microsoft Defender for Cloud Apps policies","Enable Microsoft Defender for Cloud Apps anomaly detection","Enable Microsoft Entra ID Identity Protection","Configure Microsoft Entra ID Privileged Identity Management","Enable Microsoft Entra ID access reviews","Configure Microsoft Entra ID Conditional Access policies","Enable Microsoft Entra ID Password Protection","Configure Microsoft Entra ID Multi-Factor Authentication","Enable Microsoft Entra ID Self-Service Password Reset","Configure Microsoft Entra ID Identity Governance","Enable Microsoft Entra ID Security Defaults","Disable legacy authentication protocols","Enable Microsoft Entra ID Sign-in Risk Policy","Enable Microsoft Entra ID User Risk Policy","Configure Microsoft Entra ID Named Locations","Configure Microsoft Entra ID Authentication Methods","Enable passwordless authentication methods","Require phishing-resistant MFA for admins","Enable Microsoft Intune device compliance policies","Configure Microsoft Intune endpoint protection policies","Enable Microsoft Intune app protection policies","Configure Microsoft Intune device configuration profiles","Enable Microsoft Intune Windows Update for Business","Enable Microsoft Intune device enrollment restrictions","Configure Microsoft Intune conditional access","Configure Microsoft Intune Mobile Application Management","Turn on Microsoft Defender Antivirus protection in Microsoft Defender for Endpoint","Configure Microsoft Defender for Endpoint automated investigation","Enable Microsoft Defender for Endpoint live response","Configure Microsoft Defender for Endpoint vulnerability management","Enable Microsoft Defender for Endpoint security recommendations","Configure Microsoft Defender for Endpoint attack surface reduction","Enable Microsoft Defender for Endpoint network protection in block mode","Configure Microsoft Defender for Endpoint web content filtering","Configure Microsoft Defender for Endpoint indicators","Enable Microsoft Defender for Endpoint secure score","Enable phishing-resistant MFA","Require MFA for all users","Block legacy authentication","Enable risk-based conditional access","Require compliant devices","Require hybrid Azure AD joined devices","Restrict access to privileged roles","Enable just-in-time access for virtual machines","Configure Azure Defender for servers","Enable vulnerability assessment for virtual machines","Apply system updates on virtual machines","Enable endpoint protection on virtual machines","Enable disk encryption on virtual machines","Enable network security groups on virtual machines","Enable Azure Bastion for secure VM access","Restrict public IP addresses on virtual machines","Enable Azure Firewall","Configure Azure DDoS Protection","Enable Azure Web Application Firewall","Configure Azure Private Endpoints","Enable Azure Key Vault soft delete","Enable Azure Key Vault purge protection","Configure Azure Key Vault firewall","Enable Azure Storage encryption","Configure Azure Storage access controls","Enable Azure SQL Database transparent data encryption","Configure Azure SQL Database firewall rules","Enable Azure SQL Database auditing","Enable Azure SQL Database threat detection","Configure Azure Backup for virtual machines","Enable Azure Site Recovery","Configure Azure Monitor alerts","Enable Azure Security Center","Configure Azure Policy","Configure Azure Resource Locks","Enable Azure Activity Log","Configure Azure Diagnostic Settings","Enable Azure Network Watcher","Change password for krbtgt account","Ensure privileged accounts are not delegated","Edit vulnerable Certificate Authority settings","Ensure user consent to apps accessing company data on their behalf is disabled","Encrypt LDAP client traffic to protect sensitive directory information","Set folder access-based enumeration for Windows shares","Ensure LinkedIn account connections is disabled","Ensure SharePoint external sharing is managed appropriately","Ensure Microsoft Azure Management is limited to authorized administrators","Ensure users installing Outlook add-ins is not allowed","Ensure User owned apps and services is disabled","Ensure multifactor authentication is enabled for all non-privileged users","Publish M365 sensitivity label data classifications","Turn on Microsoft Defender Antivirus PUA protection","Sign out inactive users in SharePoint Online","Disable Remote Registry","Enable firewall logging","Enable screen saver","Require password on screen saver","Enable Data Execution Prevention DEP","Enable Address Space Layout Randomization ASLR","Enable Windows Defender Application Control","Enable Microsoft Entra ID Verified ID","Configure Microsoft Entra ID External Identities","Enable Microsoft Entra ID Application Proxy","Configure Microsoft Entra ID B2B Collaboration","Enable Continuous Access Evaluation","Configure Microsoft Entra ID Token Protection","Enable Entra ID Entitlement Management","Configure Microsoft Entra ID Lifecycle Workflows"];
+
+const TOTAL = RECS.length;
+const LS_KEY = 'sso_cache_v3';
+let cache = {}, running = false, stopped = false, done = 0, errs = 0, startTime = null;
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+  if (el.children.length > 400) el.removeChild(el.firstChild);
+}
+
+function ui() {
+  const left = Math.max(0, TOTAL - done - errs);
+  document.getElementById('sDone').textContent = done;
+  document.getElementById('sErr').textContent = errs;
+  document.getElementById('sLeft').textContent = left;
+  const pct = Math.round(((done + errs) / TOTAL) * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  if (startTime && done > 0) {
+    const rate = done / ((Date.now() - startTime) / 60000);
+    document.getElementById('sEta').textContent = rate > 0 ? Math.ceil(left / rate) : '—';
+  }
+  document.getElementById('statusMsg').textContent =
+    done + errs >= TOTAL ? `Complete! ${done} of ${TOTAL} cached.` :
+    running ? `Running… ${done} done, ${left} remaining` :
+    `Paused at ${done} done — click Start to resume`;
+}
+
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(cache)); } catch(e) {} }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function callAPI(rec) {
+  const resp = await fetch('/api/pregenerate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: rec })
+  });
+  if (resp.status === 429) throw new Error('RATE_LIMIT');
+  if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || `HTTP ${resp.status}`); }
+  const data = await resp.json();
+  if (!data.ok || !data.result) throw new Error('Bad response');
+  return data.result;
+}
+
+async function run() {
+  const todo = RECS.filter(r => !cache[r]);
+  log(`Starting: ${todo.length} to generate, ${done} already cached`, 'inf');
+  startTime = Date.now();
+
+  for (let i = 0; i < todo.length; i++) {
+    if (stopped) { log('Stopped.', 'wrn'); break; }
+    const rec = todo[i];
+    let ok = false;
+
+    for (let attempt = 0; attempt < 4 && !ok; attempt++) {
+      try {
+        const result = await callAPI(rec);
+        cache[rec] = { result, generatedAt: new Date().toISOString() };
+        done++; ok = true;
+        log(`✓ [${done + errs}/${todo.length}] ${rec.substring(0, 65)}`, 'ok');
+        if ((done + errs) % 10 === 0) { save(); log(`💾 Checkpoint: ${done} saved`, 'inf'); }
+      } catch(e) {
+        if (e.message === 'RATE_LIMIT') {
+          log(`⏱ Rate limit — waiting 15s (attempt ${attempt + 1}/4)`, 'wrn');
+          await sleep(15000);
+        } else if (attempt < 3) {
+          log(`Retry ${attempt + 1}: ${e.message}`, 'wrn');
+          await sleep(2000);
+        } else {
+          errs++;
+          log(`✗ FAILED: ${rec.substring(0, 50)} — ${e.message}`, 'err');
+        }
+      }
+    }
+    ui();
+    if (ok) await sleep(800);
+  }
+
+  running = false; stopped = false;
+  save();
+  document.getElementById('startBtn').textContent = '▶ Start generation';
+  document.getElementById('dlBtn').disabled = false;
+  log(`\n✅ Done! ${Object.keys(cache).length}/${TOTAL} cached. Click Download.`, 'inf');
+  ui();
+}
+
+function toggle() {
+  if (running) {
+    stopped = true; running = false;
+    document.getElementById('startBtn').textContent = '▶ Start generation';
+  } else {
+    running = true; stopped = false;
+    document.getElementById('startBtn').textContent = '⏹ Stop';
+    run();
+  }
+}
+
+function dl() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(cache, null, 2)], { type: 'application/json' }));
+  a.download = 'recommendations-cache.json';
+  a.click();
+}
+
+function clearAll() {
+  if (!confirm('Clear all saved progress?')) return;
+  cache = {}; done = 0; errs = 0;
+  localStorage.removeItem(LS_KEY);
+  ui(); log('Cache cleared.', 'wrn');
+}
+
+// Restore checkpoint
+try {
+  const s = localStorage.getItem(LS_KEY);
+  if (s) { const c = JSON.parse(s); const n = Object.keys(c).length; if (n > 0) { cache = c; done = n; } }
+} catch(e) {}
+document.getElementById('log').textContent = '';
+ui();
+if (done > 0) {
+  log(`Restored ${done} entries from previous session — click Start to continue`, 'inf');
+  document.getElementById('dlBtn').disabled = false;
+} else {
+  log('Ready. This page must be opened from your Vercel app URL to work correctly.', 'inf');
+}
+</script>
+</body>
+</html>
