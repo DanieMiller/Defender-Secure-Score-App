@@ -5,17 +5,19 @@ import { Sun, Moon } from 'lucide-react';
 import type { GuideResult, ScriptsResult } from './types';
 import { GeneratePage } from './pages/GeneratePage';
 import { DeploymentPage } from './pages/DeploymentPage';
+import { SentinelPage } from './pages/SentinelPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryFavPages';
 import { ScriptBuilderPage } from './pages/ScriptBuilderPage';
 import { EmailTemplatePage } from './pages/EmailTemplatePage';
 import { useHistory, useFavorites, useTheme } from './hooks/useStorage';
 import { BUILogo } from './components/BUILogo';
 
-type Tab = 'generate' | 'scripts' | 'email' | 'history' | 'favorites' | 'deployment';
+type Tab = 'generate' | 'scripts' | 'email' | 'history' | 'favorites' | 'deployment' | 'sentinel';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'generate',  label: 'Secure Score' },
   { id: 'deployment', label: 'Deployment' },
+  { id: 'sentinel',   label: 'Sentinel' },
   { id: 'scripts',   label: 'Script Builder' },
   { id: 'email',     label: 'Email Template' },
   { id: 'history',   label: 'History' },
@@ -69,6 +71,10 @@ export default function App() {
     generate: {
       title: 'Secure Score Implementation Assistant',
       sub: 'Generate Intune, GPO, Entra ID and PowerShell implementation guides for any Microsoft Defender Secure Score recommendation.',
+    },
+    sentinel: {
+      title: 'Microsoft Sentinel How-To Guides',
+      sub: 'Step-by-step guides for creating Playbooks, Workbooks, Watchlists, Automation Rules, and Analytic Rules in Microsoft Sentinel.',
     },
     deployment: {
       title: 'Defender Deployment Guides',
@@ -200,6 +206,7 @@ export default function App() {
             onPendingQueryConsumed={() => setPendingQuery(null)}
           />
         )}
+        {tab === 'sentinel'   && <SentinelPage />}
         {tab === 'deployment' && <DeploymentPage />}
         {tab === 'scripts'   && <ScriptBuilderPage />}
         {tab === 'email'     && <EmailTemplatePage result={current} />}
