@@ -4,16 +4,18 @@ import { LoginPage } from './pages/LoginPage';
 import { Sun, Moon } from 'lucide-react';
 import type { GuideResult, ScriptsResult } from './types';
 import { GeneratePage } from './pages/GeneratePage';
+import { DeploymentPage } from './pages/DeploymentPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryFavPages';
 import { ScriptBuilderPage } from './pages/ScriptBuilderPage';
 import { EmailTemplatePage } from './pages/EmailTemplatePage';
 import { useHistory, useFavorites, useTheme } from './hooks/useStorage';
 import { BUILogo } from './components/BUILogo';
 
-type Tab = 'generate' | 'scripts' | 'email' | 'history' | 'favorites';
+type Tab = 'generate' | 'scripts' | 'email' | 'history' | 'favorites' | 'deployment';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'generate',  label: 'Secure Score' },
+  { id: 'deployment', label: 'Deployment' },
   { id: 'scripts',   label: 'Script Builder' },
   { id: 'email',     label: 'Email Template' },
   { id: 'history',   label: 'History' },
@@ -67,6 +69,10 @@ export default function App() {
     generate: {
       title: 'Secure Score Implementation Assistant',
       sub: 'Generate Intune, GPO, Entra ID and PowerShell implementation guides for any Microsoft Defender Secure Score recommendation.',
+    },
+    deployment: {
+      title: 'Defender Deployment Guides',
+      sub: 'Step-by-step deployment guides with prerequisites for Defender for Identity, Cloud, IoT, and Cloud Apps.',
     },
     scripts: {
       title: 'Endpoint Script Builder',
@@ -194,6 +200,7 @@ export default function App() {
             onPendingQueryConsumed={() => setPendingQuery(null)}
           />
         )}
+        {tab === 'deployment' && <DeploymentPage />}
         {tab === 'scripts'   && <ScriptBuilderPage />}
         {tab === 'email'     && <EmailTemplatePage result={current} />}
         {tab === 'history'   && <HistoryPage items={history.items} onLoad={handleLoad} onDelete={history.remove} onClear={history.clear} />}
