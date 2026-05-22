@@ -7,18 +7,16 @@ import { GeneratePage } from './pages/GeneratePage';
 import { DeploymentPage } from './pages/DeploymentPage';
 import { SentinelPage } from './pages/SentinelPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryFavPages';
-import { ScriptBuilderPage } from './pages/ScriptBuilderPage';
 import { EmailTemplatePage } from './pages/EmailTemplatePage';
 import { useHistory, useFavorites, useTheme } from './hooks/useStorage';
 import { BUILogo } from './components/BUILogo';
 
-type Tab = 'generate' | 'scripts' | 'email' | 'history' | 'favorites' | 'deployment' | 'sentinel';
+type Tab = 'generate' | 'email' | 'history' | 'favorites' | 'deployment' | 'sentinel';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'generate',  label: 'Secure Score' },
   { id: 'deployment', label: 'Deployment' },
   { id: 'sentinel',   label: 'Sentinel' },
-  { id: 'scripts',   label: 'Script Builder' },
   { id: 'email',     label: 'Email Template' },
   { id: 'history',   label: 'History' },
   { id: 'favorites', label: 'Favorites' },
@@ -79,10 +77,6 @@ export default function App() {
     deployment: {
       title: 'Defender Deployment Guides',
       sub: 'Step-by-step deployment guides with prerequisites for Defender for Identity, Cloud, IoT, and Cloud Apps.',
-    },
-    scripts: {
-      title: 'Endpoint Script Builder',
-      sub: 'Describe any endpoint management task in plain English — get Intune-ready detection, remediation, validation and rollback scripts.',
     },
     email: {
       title: 'Email Template Generator',
@@ -208,7 +202,6 @@ export default function App() {
         )}
         {tab === 'sentinel'   && <SentinelPage />}
         {tab === 'deployment' && <DeploymentPage />}
-        {tab === 'scripts'   && <ScriptBuilderPage />}
         {tab === 'email'     && <EmailTemplatePage result={current} />}
         {tab === 'history'   && <HistoryPage items={history.items} onLoad={handleLoad} onDelete={history.remove} onClear={history.clear} />}
         {tab === 'favorites' && <FavoritesPage items={favorites.items} onLoad={handleLoad} onDelete={favorites.remove} />}
