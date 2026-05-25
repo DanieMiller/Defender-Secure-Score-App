@@ -156,6 +156,17 @@ export default function App() {
                 {dark ? <Sun size={14} /> : <Moon size={14} />}
               </button>
 
+              {/* See.Tech external link - far right */}
+              <a
+                href="https://app.see.tech/customer/home"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 text-xs px-3 py-1.5 rounded-md font-medium transition-colors whitespace-nowrap flex items-center gap-1"
+                style={{ background: 'rgba(217,134,28,0.15)', color: '#d9861c', border: '1px solid rgba(217,134,28,0.4)' }}
+                title="Open See.Tech Vulnerability Scanning">
+                🔍 See.Tech Vulnerability Scanning ↗
+              </a>
+
               {/* Logout */}
               <button onClick={logout}
                 className="ml-1 text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
