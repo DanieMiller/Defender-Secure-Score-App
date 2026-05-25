@@ -31602,5 +31602,1918 @@
       }
     },
     "generatedAt": "2026-05-21T00:00:00Z"
+  },
+  "Enable Gatekeeper in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Gatekeeper ensures only signed and notarised apps from trusted sources can run on macOS, protecting against malicious software.",
+      "category": "Application Control",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: Enable Gatekeeper",
+          "Click Add settings, search for Gatekeeper",
+          "Select Gatekeeper > Allow identified developers: set to Enabled",
+          "Optionally enable Require app notarization for stronger enforcement",
+          "Assign to your macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In the Defender portal (security.microsoft.com), go to Settings > Endpoints > Device management > Onboarding",
+          "For Jamf Pro: Computers > Configuration Profiles > New > add Privacy Preferences Policy Control",
+          "Set Gatekeeper assessment to Allow identified developers or Mac App Store only"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "Run on the Mac: spctl --status \u2014 should return 'assessments enabled'",
+        "Check System Settings > Privacy & Security > Security section shows 'App Store and identified developers'",
+        "In Intune, check device compliance report after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable Gatekeeper (not recommended)\nsudo spctl --master-disable\necho \"WARNING: Gatekeeper disabled - system is less secure\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant (Gatekeeper enabled), Exit 1 = not compliant\nresult=$(spctl --status 2>&1)\nif echo \"$result\" | grep -q \"assessments enabled\"; then\n    echo \"COMPLIANT: Gatekeeper is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Gatekeeper is disabled\"\n    exit 1\nfi",
+        "implementation": "# Enable Gatekeeper on macOS\nsudo spctl --master-enable\necho \"Gatekeeper enabled\"\n# Verify\nspctl --status",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant (Gatekeeper enabled), Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable Gatekeeper (not recommended)\nsudo spctl --master-disable\necho \"WARNING: Gatekeeper disabled - system is less secure\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Secure Home Folders in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Restricts access to user home folders so only the owner can read their contents, preventing other local users from accessing private data.",
+      "category": "Data Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: Secure Home Folders",
+          "Click Add settings, search for Security and Privacy",
+          "Look for 'Secure home folder permissions' or use a custom script profile",
+          "Alternatively click Create > Templates > Custom",
+          "Upload a shell script that runs: sudo chmod go-rx /Users/*",
+          "Set Run script as signed-in user: No (run as root)",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Deploy as a shell script via Intune: Devices > macOS > Shell scripts > Add",
+          "Script content: chmod go-rx /Users/*",
+          "Run as: System (root)",
+          "Execution frequency: Every 1 week to maintain compliance"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Restore default home folder permissions\nfor dir in /Users/*/; do\n    username=$(basename \"$dir\")\n    if [ \"$username\" = \"Shared\" ] || [ \"$username\" = \".localized\" ]; then continue; fi\n    chmod 755 \"$dir\"\n    echo \"Restored: $dir\"\ndone"
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nnon_compliant=0\nfor dir in /Users/*/; do\n    username=$(basename \"$dir\")\n    if [ \"$username\" = \"Shared\" ] || [ \"$username\" = \".localized\" ]; then continue; fi\n    perms=$(stat -f \"%A\" \"$dir\")\n    if [ \"$perms\" != \"700\" ] && [ \"$perms\" != \"711\" ]; then\n        echo \"NON-COMPLIANT: $dir has permissions $perms\"\n        non_compliant=1\n    fi\ndone\nif [ $non_compliant -eq 0 ]; then echo \"COMPLIANT: All home folders are secured\"; exit 0; else exit 1; fi",
+        "implementation": "# Secure all user home folders\nfor dir in /Users/*/; do\n    username=$(basename \"$dir\")\n    if [ \"$username\" = \"Shared\" ] || [ \"$username\" = \".localized\" ]; then continue; fi\n    chmod go-rx \"$dir\"\n    echo \"Secured: $dir\"\ndone\necho \"Home folder permissions secured\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Restore default home folder permissions\nfor dir in /Users/*/; do\n    username=$(basename \"$dir\")\n    if [ \"$username\" = \"Shared\" ] || [ \"$username\" = \".localized\" ]; then continue; fi\n    chmod 755 \"$dir\"\n    echo \"Restored: $dir\"\ndone"
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Set minimum password length to 15 or more characters in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enforces a minimum password length of 15 characters for all local macOS user accounts to resist brute force attacks.",
+      "category": "Identity & Access",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Password Policy",
+          "Click Add settings, search for Password",
+          "Select Restrictions > Password > Minimum password length",
+          "Set value to 15",
+          "Also configure: Minimum complex characters: 1, Maximum password age: 90",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In Jamf Pro: Computers > Configuration Profiles > New > Passcode",
+          "Set Minimum Passcode Length: 15",
+          "Set Require alphanumeric value: Yes"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Remove password length requirement\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"minChars=8\"\necho \"Password policy reverted to 8 characters\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nmin_len=$(pwpolicy -getaccountpolicies 2>/dev/null | grep -i \"minChars\" | grep -oE '[0-9]+' | head -1)\nif [ -z \"$min_len\" ]; then\n    # Try system-wide policy\n    min_len=$(pwpolicy -n /Local/Default -getglobalpolicy 2>/dev/null | grep -oE 'minChars=[0-9]+' | grep -oE '[0-9]+')\nfi\nif [ ! -z \"$min_len\" ] && [ \"$min_len\" -ge 15 ]; then\n    echo \"COMPLIANT: Minimum password length is $min_len\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Minimum password length is ${min_len:-not set}\"\n    exit 1\nfi",
+        "implementation": "# Set minimum password length to 15 on macOS\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"minChars=15 requiresAlpha=1 requiresNumeric=1\"\necho \"Password policy updated: minimum 15 characters\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Remove password length requirement\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"minChars=8\"\necho \"Password policy reverted to 8 characters\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Set 'Maximum password age' to '90 or fewer days, but not 0' in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enforces password expiry every 90 days or fewer for local macOS accounts, ensuring credentials are regularly rotated.",
+      "category": "Identity & Access",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Password Expiry",
+          "Click Add settings, search for Password",
+          "Select Restrictions > Password > Maximum auto-lock (or Maximum password age)",
+          "Set Maximum password age to 90 days",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In Jamf Pro: Computers > Configuration Profiles > New > Passcode",
+          "Set Maximum Passcode Age: 90",
+          "Save and deploy to macOS devices"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Remove password age limit\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxMinutesUntilChangePassword=0\"\necho \"Password age limit removed\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nmax_age=$(pwpolicy -n /Local/Default -getglobalpolicy 2>/dev/null | grep -oE 'maxMinutesUntilChangePassword=[0-9]+' | grep -oE '[0-9]+')\nif [ ! -z \"$max_age\" ]; then\n    max_days=$((max_age / 1440))\n    if [ \"$max_days\" -le 90 ] && [ \"$max_days\" -gt 0 ]; then\n        echo \"COMPLIANT: Max password age is $max_days days\"\n        exit 0\n    fi\nfi\necho \"NON-COMPLIANT: Max password age is ${max_days:-not set}\"\nexit 1",
+        "implementation": "# Set maximum password age to 90 days (90 days * 1440 min/day = 129600 minutes)\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxMinutesUntilChangePassword=129600\"\necho \"Maximum password age set to 90 days\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Remove password age limit\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxMinutesUntilChangePassword=0\"\necho \"Password age limit removed\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Ensure screensaver is set to start in 20 minutes or less in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Configures the macOS screensaver to activate after 20 minutes of inactivity to lock unattended workstations.",
+      "category": "Device Security",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Screensaver Lock",
+          "Click Add settings, search for Screen Saver",
+          "Select Login Window > Screen Saver > idleTime",
+          "Set idle time to 1200 (seconds = 20 minutes) or lower",
+          "Also enable askForPassword: set to True (require password on wake)",
+          "Set askForPasswordDelay to 0 (immediately require password)",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In Jamf Pro: Computers > Configuration Profiles > New > Login Window",
+          "Under Options tab: set Start screen saver after: 20 minutes",
+          "Enable Require password to wake computer from sleep or screen saver"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Set screensaver idle time to 30 minutes\ndefaults -currentHost write com.apple.screensaver idleTime -int 1800\necho \"Screensaver idle time set to 30 minutes\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nidle_time=$(defaults -currentHost read com.apple.screensaver idleTime 2>/dev/null)\nif [ -z \"$idle_time\" ]; then\n    idle_time=$(defaults read com.apple.screensaver idleTime 2>/dev/null)\nfi\nif [ ! -z \"$idle_time\" ] && [ \"$idle_time\" -gt 0 ] && [ \"$idle_time\" -le 1200 ]; then\n    echo \"COMPLIANT: Screensaver starts after $idle_time seconds\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Screensaver idle time is ${idle_time:-not set}\"\n    exit 1\nfi",
+        "implementation": "# Set screensaver to start after 20 minutes (1200 seconds)\ndefaults -currentHost write com.apple.screensaver idleTime -int 1200\ndefaults write com.apple.screensaver askForPassword -int 1\ndefaults write com.apple.screensaver askForPasswordDelay -int 0\necho \"Screensaver set to 20 minutes with password required on wake\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Set screensaver idle time to 30 minutes\ndefaults -currentHost write com.apple.screensaver idleTime -int 1800\necho \"Screensaver idle time set to 30 minutes\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Fix Microsoft Defender for Endpoint sensor data collection in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Ensures the Microsoft Defender for Endpoint sensor is running correctly and collecting security telemetry on macOS.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy, name it: MDE macOS Onboarding",
+          "Platform: macOS, Profile type: Templates > Custom",
+          "Upload the MDE onboarding package downloaded from security.microsoft.com",
+          "Go to security.microsoft.com > Settings > Endpoints > Device management > Onboarding",
+          "Select macOS as operating system, then select Intune as the deployment method",
+          "Download the onboarding package and upload it as a custom profile",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Navigate to security.microsoft.com > Settings > Endpoints > Device management > Onboarding",
+          "Select macOS and your deployment method (Intune, Jamf, or script)",
+          "Follow the onboarding package instructions to deploy the MDE agent",
+          "After deployment, verify sensor status at: security.microsoft.com > Devices > find the macOS device"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Stop MDE daemon (not recommended in production)\nsudo launchctl stop com.microsoft.wdav\necho \"MDE daemon stopped\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = MDE running, Exit 1 = not running\nif pgrep -x \"wdavdaemon\" > /dev/null 2>&1; then\n    echo \"COMPLIANT: MDE daemon (wdavdaemon) is running\"\n    # Also check health\n    mdatp_health=$(mdatp health --field healthy 2>/dev/null)\n    echo \"MDE health: $mdatp_health\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: MDE daemon is not running\"\n    exit 1\nfi",
+        "implementation": "# Restart MDE sensor on macOS\nsudo launchctl stop com.microsoft.wdav\nsleep 2\nsudo launchctl start com.microsoft.wdav\necho \"MDE sensor restarted\"\n# Check status\nmdatp health",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = MDE running, Exit 1 = not running",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Stop MDE daemon (not recommended in production)\nsudo launchctl stop com.microsoft.wdav\necho \"MDE daemon stopped\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Turn on Microsoft Defender Antivirus PUA protection in block mode in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables Potentially Unwanted Application (PUA) protection in block mode in Microsoft Defender for Endpoint on macOS.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy, name it: MDE macOS PUA Block",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Add settings, search for Microsoft Defender",
+          "Find Antivirus engine > Potentially unwanted application enforcement level",
+          "Set value to: block",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Alternatively configure via MDE preference file deployed through Jamf/Intune",
+          "Create a property list with key: antivirusEngine > potentiallyUnwantedApplicationEnforcement = block",
+          "In security.microsoft.com, go to Settings > Endpoints > Advanced features and verify PUA protection is on"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Set PUA to audit mode\nmdatp config potentially-unwanted-app --value audit\necho \"PUA protection set to audit mode\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant (PUA block enabled), Exit 1 = not compliant\npua_level=$(mdatp health --field potentially_unwanted_application_enforcement_level 2>/dev/null)\nif [ \"$pua_level\" = \"block\" ]; then\n    echo \"COMPLIANT: PUA protection is in block mode\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: PUA protection level is '${pua_level:-not set}'\"\n    exit 1\nfi",
+        "implementation": "# Enable PUA protection in block mode\nmdatp config potentially-unwanted-app --value block\necho \"PUA protection set to block mode\"\n# Verify\nmdatp health --field potentially_unwanted_application_enforcement_level",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant (PUA block enabled), Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Set PUA to audit mode\nmdatp config potentially-unwanted-app --value audit\necho \"PUA protection set to audit mode\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Fix Microsoft Defender for Endpoint impaired communications in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Resolves connectivity issues between the Microsoft Defender for Endpoint sensor and Microsoft cloud services on macOS.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to security.microsoft.com > Settings > Endpoints > Device management > Onboarding",
+          "Select macOS and download the onboarding package if the sensor needs reinstalling",
+          "In Intune, go to Devices > macOS > find the affected device",
+          "Click Sync to force a policy refresh on the device",
+          "Check the device details for any configuration profile errors",
+          "If profile failed, remove and reassign the MDE configuration profile"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In security.microsoft.com, navigate to Devices > find the macOS device > click Device health",
+          "Review sensor health indicators \u2014 look for cloud connectivity status",
+          "Check if the device can reach: *.atp.azure.com and *.security.microsoft.com on port 443",
+          "Run mdatp connectivity test on the Mac to diagnose connectivity issues"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: No rollback needed for connectivity fixes\necho \"Restart MDE: sudo launchctl restart com.microsoft.wdav\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = MDE healthy and connected, Exit 1 = not compliant\nif ! pgrep -x \"wdavdaemon\" > /dev/null 2>&1; then\n    echo \"NON-COMPLIANT: MDE daemon not running\"\n    exit 1\nfi\nhealth=$(mdatp health --field healthy 2>/dev/null)\nif [ \"$health\" = \"true\" ]; then\n    echo \"COMPLIANT: MDE is healthy and connected\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: MDE health is '$health'\"\n    exit 1\nfi",
+        "implementation": "# Fix MDE communications on macOS\necho \"Restarting MDE services...\"\nsudo launchctl stop com.microsoft.wdav\nsleep 3\nsudo launchctl start com.microsoft.wdav\nsleep 5\necho \"Running connectivity test...\"\nmdatp connectivity test\necho \"MDE health status:\"\nmdatp health",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = MDE healthy and connected, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: No rollback needed for connectivity fixes\necho \"Restart MDE: sudo launchctl restart com.microsoft.wdav\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Set 'Enforce password history' to '24 or more password(s)' in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Prevents users from reusing recent passwords by enforcing a history of at least 24 previous passwords on macOS.",
+      "category": "Identity & Access",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Password History",
+          "Click Add settings, search for Password",
+          "Select Restrictions > Password > Password history",
+          "Set value to 24",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In Jamf Pro: Computers > Configuration Profiles > New > Passcode",
+          "Set Password History: 24",
+          "Save and deploy to macOS devices"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Set password history to 0 (disabled)\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"usingHistory=0\"\necho \"Password history requirement removed\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nhistory=$(pwpolicy -n /Local/Default -getglobalpolicy 2>/dev/null | grep -oE 'usingHistory=[0-9]+' | grep -oE '[0-9]+')\nif [ ! -z \"$history\" ] && [ \"$history\" -ge 24 ]; then\n    echo \"COMPLIANT: Password history is $history\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Password history is ${history:-not set}\"\n    exit 1\nfi",
+        "implementation": "# Set password history to 24\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"usingHistory=24\"\necho \"Password history set to 24 previous passwords\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Set password history to 0 (disabled)\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"usingHistory=0\"\necho \"Password history requirement removed\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Update Microsoft Defender Antivirus definitions in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Ensures Microsoft Defender Antivirus security definitions are up to date on macOS devices.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Shell scripts",
+          "Click Add, enter name: Update MDE Definitions macOS",
+          "Script content: mdatp definitions update",
+          "Run script as signed-in user: No (run as system)",
+          "Max number of times to retry if script fails: 3",
+          "Assign to macOS device group and click Save",
+          "For ongoing updates, set Execution frequency to Every 1 day"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Navigate to security.microsoft.com > Devices > find the Mac > Device health",
+          "Check the definition version and last update time",
+          "If outdated, force an update via Intune shell script or run mdatp definitions update on the device"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Definition updates cannot be rolled back\necho \"Definition updates are one-way and cannot be rolled back\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = definitions updated in last 24h, Exit 1 = outdated\nlast_update=$(mdatp health --field definitions_updated_at 2>/dev/null)\nif [ -z \"$last_update\" ]; then\n    echo \"NON-COMPLIANT: Cannot determine definition update time\"\n    exit 1\nfi\n# Check if updated within 24 hours\nupdate_epoch=$(date -j -f \"%Y-%m-%dT%H:%M:%S\" \"${last_update:0:19}\" \"+%s\" 2>/dev/null)\nnow_epoch=$(date \"+%s\")\ndiff=$(( (now_epoch - update_epoch) / 3600 ))\nif [ \"$diff\" -le 24 ]; then\n    echo \"COMPLIANT: Definitions updated $diff hours ago\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Definitions updated $diff hours ago\"\n    exit 1\nfi",
+        "implementation": "# Update Defender Antivirus definitions\nmdatp definitions update\necho \"Definition update triggered\"\n# Show current version\nmdatp health --field definitions_version\nmdatp health --field definitions_updated_at",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = definitions updated in last 24h, Exit 1 = outdated",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Definition updates cannot be rolled back\necho \"Definition updates are one-way and cannot be rolled back\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Set account lockout threshold to 5 or lower in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Locks macOS user accounts after 5 or fewer failed login attempts to protect against brute force attacks.",
+      "category": "Identity & Access",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Account Lockout",
+          "Click Add settings, search for Password",
+          "Select Restrictions > Password > Maximum number of failed attempts",
+          "Set value to 5",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "In Jamf Pro: Computers > Configuration Profiles > New > Passcode",
+          "Set Maximum Number of Failed Attempts: 5",
+          "Save and deploy to macOS devices"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable account lockout\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxFailedPasswordAttempts=0\"\necho \"Account lockout disabled\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nmax_fails=$(pwpolicy -n /Local/Default -getglobalpolicy 2>/dev/null | grep -oE 'maxFailedPasswordAttempts=[0-9]+' | grep -oE '[0-9]+')\nif [ ! -z \"$max_fails\" ] && [ \"$max_fails\" -le 5 ] && [ \"$max_fails\" -gt 0 ]; then\n    echo \"COMPLIANT: Account lockout threshold is $max_fails attempts\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Account lockout threshold is ${max_fails:-not set}\"\n    exit 1\nfi",
+        "implementation": "# Set account lockout threshold to 5 failed attempts\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxFailedPasswordAttempts=5\"\necho \"Account lockout threshold set to 5 failed attempts\" ",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable account lockout\nsudo pwpolicy -n /Local/Default -setglobalpolicy \"maxFailedPasswordAttempts=0\"\necho \"Account lockout disabled\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Turn on Microsoft Defender Antivirus real-time protection in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables real-time antivirus protection in Microsoft Defender for Endpoint on macOS to detect and block threats as they occur.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy, name it: MDE macOS Real-time Protection",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Add settings, search for Microsoft Defender",
+          "Find Antivirus engine > Enable real-time protection",
+          "Set to: Enabled",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Run on the Mac: mdatp config real-time-protection --value enabled",
+          "Verify: mdatp health --field real_time_protection_enabled",
+          "In security.microsoft.com, check Devices > the Mac > verify Real-time protection shows enabled"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable real-time protection (not recommended)\nmdatp config real-time-protection --value disabled\necho \"WARNING: Real-time protection disabled\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\nrtp=$(mdatp health --field real_time_protection_enabled 2>/dev/null)\nif [ \"$rtp\" = \"true\" ]; then\n    echo \"COMPLIANT: Real-time protection is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Real-time protection is '${rtp:-not available}'\"\n    exit 1\nfi",
+        "implementation": "# Enable real-time protection\nmdatp config real-time-protection --value enabled\necho \"Real-time protection enabled\"\n# Verify\nmdatp health --field real_time_protection_enabled",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable real-time protection (not recommended)\nmdatp config real-time-protection --value disabled\necho \"WARNING: Real-time protection disabled\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Turn on Firewall in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables the built-in macOS application firewall to block unauthorised incoming network connections.",
+      "category": "Network Security",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Create, enter name: macOS Firewall",
+          "Click Add settings, search for Firewall",
+          "Select Security and Privacy > Firewall > Enable Firewall: set to Enabled",
+          "Also enable: Block all incoming connections: if required by your security policy",
+          "Enable Stealth Mode: Enabled \u2014 prevents the Mac from responding to probe requests",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "On Mac directly: System Settings > Network > Firewall > turn On",
+          "Via command line: sudo defaults write /Library/Preferences/com.apple.alf globalstate -int 1",
+          "Verify: /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable macOS firewall\nsudo defaults write /Library/Preferences/com.apple.alf globalstate -int 0\n/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off\necho \"macOS Firewall disabled\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant (firewall on), Exit 1 = not compliant\nfw_state=$(/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null)\nif echo \"$fw_state\" | grep -q \"enabled\"; then\n    echo \"COMPLIANT: macOS Firewall is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: macOS Firewall is disabled\"\n    exit 1\nfi",
+        "implementation": "# Enable macOS application firewall\nsudo defaults write /Library/Preferences/com.apple.alf globalstate -int 1\nsudo launchctl load /System/Library/LaunchDaemons/com.apple.alf.agent.plist 2>/dev/null\n/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on\necho \"macOS Firewall enabled\"\n/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant (firewall on), Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable macOS firewall\nsudo defaults write /Library/Preferences/com.apple.alf globalstate -int 0\n/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off\necho \"macOS Firewall disabled\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Enable Microsoft Defender Antivirus cloud-delivered protection in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables cloud-delivered protection in Microsoft Defender for Endpoint on macOS for faster detection of new and emerging threats.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy, name it: MDE macOS Cloud Protection",
+          "Platform: macOS, Profile type: Settings catalog",
+          "Click Add settings, search for Microsoft Defender",
+          "Find Antivirus engine > Enable cloud-delivered protection",
+          "Set to: Enabled",
+          "Also enable: Automatic security intelligence updates: Enabled",
+          "Assign to macOS device group and click Save"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Run on the Mac: mdatp config cloud --value enabled",
+          "Verify: mdatp health --field cloud_enabled",
+          "Expected output: true"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable cloud-delivered protection\nmdatp config cloud --value disabled\necho \"Cloud-delivered protection disabled\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\ncloud=$(mdatp health --field cloud_enabled 2>/dev/null)\nif [ \"$cloud\" = \"true\" ]; then\n    echo \"COMPLIANT: Cloud-delivered protection is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Cloud protection is '${cloud:-not available}'\"\n    exit 1\nfi",
+        "implementation": "# Enable cloud-delivered protection\nmdatp config cloud --value enabled\necho \"Cloud-delivered protection enabled\"\nmdatp health --field cloud_enabled",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable cloud-delivered protection\nmdatp config cloud --value disabled\necho \"Cloud-delivered protection disabled\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Turn on Tamper Protection for MacOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables Tamper Protection in Microsoft Defender for Endpoint on macOS to prevent malicious apps from disabling security features.",
+      "category": "Endpoint Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://security.microsoft.com",
+          "Navigate to Settings > Endpoints > Advanced features",
+          "Find Tamper protection and ensure it is turned On at the global level",
+          "For per-device enforcement, go to security.microsoft.com > Devices > find your macOS device",
+          "Click the device name, then click Manage tamper protection in the toolbar",
+          "Toggle Tamper protection to On for this device",
+          "In Intune, deploy the MDE preference configuration that includes tamperProtection: block",
+          "Go to Devices > macOS > Configuration profiles > Create > Settings catalog > search Defender > Tamper protection > set to block"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "Tamper Protection is configured at the tenant level in security.microsoft.com > Settings > Endpoints > Advanced features",
+          "For Jamf Pro deployment: add tamperProtection key to the MDE PLIST configuration profile",
+          "Set value to: block"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable Tamper Protection\nmdatp config tamper-protection --value audit\necho \"Tamper protection set to audit mode\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant, Exit 1 = not compliant\ntamper=$(mdatp health --field tamper_protection 2>/dev/null)\nif [ \"$tamper\" = \"block\" ] || [ \"$tamper\" = \"enabled\" ]; then\n    echo \"COMPLIANT: Tamper protection is enabled ($tamper)\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: Tamper protection is '${tamper:-not available}'\"\n    exit 1\nfi",
+        "implementation": "# Enable Tamper Protection via MDE CLI\nmdatp config tamper-protection --value block\necho \"Tamper protection set to block mode\"\n# Verify\nmdatp health --field tamper_protection",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant, Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable Tamper Protection\nmdatp config tamper-protection --value audit\necho \"Tamper protection set to audit mode\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Enable System Integrity Protection (SIP) in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "System Integrity Protection (SIP) prevents potentially malicious software from modifying protected files and folders on macOS.",
+      "category": "System Hardening",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "SIP is a macOS kernel-level feature and cannot be configured via Intune MDM profiles",
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Shell scripts > Add",
+          "Name: Check SIP Status",
+          "Script: csrutil status \u2014 use this as a detection script only",
+          "SIP can only be disabled/enabled by booting into macOS Recovery mode",
+          "To enforce SIP: deploy a shell script that alerts if SIP is disabled",
+          "Assign to macOS device group and set Execution frequency: Every 1 day"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "SIP status check: run csrutil status on the Mac",
+          "If SIP is disabled, the user must re-enable it manually:",
+          "1. Restart the Mac and hold Command+R to enter Recovery Mode",
+          "2. Open Terminal from the Utilities menu",
+          "3. Run: csrutil enable",
+          "4. Restart the Mac",
+          "In security.microsoft.com, SIP status may appear under device health for MDE-enrolled devices"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: SIP cannot be disabled via script either\necho \"SIP can only be disabled in macOS Recovery Mode\"\necho \"This is a security feature by design\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant (SIP enabled), Exit 1 = not compliant\nsip_status=$(csrutil status 2>/dev/null)\nif echo \"$sip_status\" | grep -q \"enabled\"; then\n    echo \"COMPLIANT: System Integrity Protection is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: System Integrity Protection is disabled\"\n    echo \"To enable: boot to Recovery Mode (Cmd+R), open Terminal, run: csrutil enable\"\n    exit 1\nfi",
+        "implementation": "# SIP cannot be enabled via script - user must enable via Recovery Mode\necho \"SIP cannot be enabled programmatically\"\necho \"To enable SIP:\"\necho \"1. Restart Mac and hold Command+R (Intel) or hold power button (Apple Silicon)\"\necho \"2. Open Terminal from Utilities menu\"\necho \"3. Run: csrutil enable\"\necho \"4. Restart the Mac\"\ncsrutil status",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant (SIP enabled), Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: SIP cannot be disabled via script either\necho \"SIP can only be disabled in macOS Recovery Mode\"\necho \"This is a security feature by design\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
+  },
+  "Enable FileVault Disk Encryption in macOS": {
+    "result": {
+      "confidence": "High",
+      "summary": "Enables FileVault full disk encryption on macOS to protect data at rest if the device is lost or stolen.",
+      "category": "Data Protection",
+      "affected_os": [
+        "macOS"
+      ],
+      "user_impact": "Low",
+      "platforms": [
+        "macOS"
+      ],
+      "intune": {
+        "method": "macOS Device Configuration",
+        "steps": [
+          "Go to https://intune.microsoft.com",
+          "Click Devices > macOS > Configuration profiles",
+          "Click Create > New policy",
+          "Platform: macOS, Profile type: Templates",
+          "Select Endpoint protection from the templates list",
+          "Click Create, enter name: macOS FileVault Encryption",
+          "Under FileVault section, set Enable FileVault: Yes",
+          "Set Recovery key type: Personal recovery key \u2014 this escrows the key to Intune",
+          "Set Escrow location description: Your IT department can recover this key if needed",
+          "Set Number of times allowed to bypass: 1 \u2014 user gets one deferral then must enable",
+          "Set Hide recovery key: Yes (prevents user from seeing the key themselves)",
+          "Assign to macOS device group and click Save",
+          "Users will be prompted to enable FileVault at next login"
+        ],
+        "settings_path": null,
+        "oma_uri": null,
+        "data_type": null,
+        "value": "Enabled"
+      },
+      "gpo": {
+        "steps": [
+          "GPO does not apply to macOS. Use Intune MDM, Jamf Pro, or another MDM solution to manage macOS devices."
+        ],
+        "policy_path": "N/A \u2014 macOS does not use Group Policy",
+        "setting_name": "N/A",
+        "value": "N/A",
+        "admx": null,
+        "registry_key": null,
+        "registry_value": null,
+        "registry_data": null
+      },
+      "entra": {
+        "applicable": false,
+        "steps": [],
+        "portal_path": null,
+        "policy_type": null,
+        "settings": [],
+        "conditional_access": false,
+        "ca_policy_name": null,
+        "graph_api": null,
+        "powershell": null,
+        "notes": null
+      },
+      "defender": {
+        "applicable": true,
+        "product": "Microsoft Defender for Endpoint (macOS)",
+        "portal_path": "https://security.microsoft.com",
+        "steps": [
+          "After deploying the Intune profile, verify at: Intune > Devices > macOS > the device > Recovery keys",
+          "The escrow key should appear \u2014 this is the key used to unlock the drive if the user forgets their password",
+          "In security.microsoft.com, FileVault status may appear under device properties for MDE-enrolled Macs"
+        ],
+        "policy_name": null,
+        "settings": [],
+        "powershell": null,
+        "graph_api": null,
+        "notes": "Configure via Intune MDM profile or Jamf Pro policy pushed to macOS devices."
+      },
+      "validation_steps": [
+        "On the Mac, open System Settings and verify the setting is applied",
+        "In Intune portal, check the device compliance status under Devices > macOS > the specific device",
+        "In Microsoft Defender portal, check Secure Score \u2014 recommendation should move to Completed after 24 hours"
+      ],
+      "rollback": {
+        "intune": "Remove or edit the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+        "gpo": "N/A \u2014 macOS does not use Group Policy",
+        "entra": null,
+        "defender": null,
+        "powershell": "# Run on the Mac terminal to revert:\n# Rollback: Disable FileVault (not recommended - decryption takes hours)\necho \"Disabling FileVault will decrypt the disk - this takes hours and is not recommended\"\necho \"If required: System Settings > Privacy & Security > FileVault > Turn Off FileVault\"\necho \"Or: sudo fdesetup disable\" "
+      },
+      "risks": [
+        "Test on a pilot group of Macs before broad deployment",
+        "Some settings may prompt users for approval \u2014 communicate changes in advance"
+      ],
+      "references": [
+        {
+          "title": "Microsoft Defender for Endpoint on macOS",
+          "url": "https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint-mac",
+          "type": "Official Docs"
+        },
+        {
+          "title": "Microsoft Secure Score",
+          "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender/microsoft-secure-score",
+          "type": "Official Docs"
+        }
+      ],
+      "scripts": {
+        "detection": "# Exit 0 = compliant (FileVault enabled), Exit 1 = not compliant\nfv_status=$(fdesetup status 2>/dev/null)\nif echo \"$fv_status\" | grep -q \"FileVault is On\"; then\n    echo \"COMPLIANT: FileVault is enabled\"\n    exit 0\nelse\n    echo \"NON-COMPLIANT: FileVault is not enabled\"\n    echo \"Status: $fv_status\"\n    exit 1\nfi",
+        "implementation": "# Enable FileVault (requires a logged-in user with admin rights)\n# Note: In an MDM environment, use the Intune FileVault profile instead\n# This script checks status and provides instructions\nfv_status=$(fdesetup status)\nif echo \"$fv_status\" | grep -q \"FileVault is On\"; then\n    echo \"FileVault is already enabled\"\nelse\n    echo \"Enabling FileVault via Intune profile is the recommended approach\"\n    echo \"For manual enablement: System Settings > Privacy & Security > FileVault > Turn On\"\n    echo \"Or run: sudo fdesetup enable -user $(whoami)\"\nfi",
+        "validation": "# Re-run detection script to confirm compliance\n# Exit 0 = compliant (FileVault enabled), Exit 1 = not compliant",
+        "rollback": {
+          "intune": "Remove the macOS configuration profile in Intune > Devices > macOS > Configuration profiles",
+          "gpo": "N/A \u2014 macOS does not use Group Policy",
+          "entra": null,
+          "defender": null,
+          "powershell": "# Rollback: Disable FileVault (not recommended - decryption takes hours)\necho \"Disabling FileVault will decrypt the disk - this takes hours and is not recommended\"\necho \"If required: System Settings > Privacy & Security > FileVault > Turn Off FileVault\"\necho \"Or: sudo fdesetup disable\" "
+        }
+      }
+    },
+    "generatedAt": "2026-05-25T00:00:00Z"
   }
 }
