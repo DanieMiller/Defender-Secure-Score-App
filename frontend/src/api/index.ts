@@ -2,12 +2,8 @@ import type { GuideResult, ScriptsResult } from '../types';
 
 const API_BASE = '/api';
 
-function getToken(): string {
-  try { return localStorage.getItem('sso_auth_token') || ''; } catch { return ''; }
-}
-
 function authHeaders(): Record<string, string> {
-  return { 'Content-Type': 'application/json', 'x-auth-token': getToken() };
+  return { 'Content-Type': 'application/json' };
 }
 
 export interface GenerateResponse {
