@@ -6,15 +6,17 @@ import type { GuideResult, ScriptsResult } from './types';
 import { GeneratePage } from './pages/GeneratePage';
 import { DeploymentPage } from './pages/DeploymentPage';
 import { SentinelPage } from './pages/SentinelPage';
+import { BaselinesPage } from './pages/BaselinesPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryFavPages';
 import { EmailTemplatePage } from './pages/EmailTemplatePage';
 import { useHistory, useFavorites, useTheme } from './hooks/useStorage';
 import { BUILogo } from './components/BUILogo';
 
-type Tab = 'generate' | 'email' | 'history' | 'favorites' | 'deployment' | 'sentinel';
+type Tab = 'generate' | 'email' | 'history' | 'favorites' | 'deployment' | 'sentinel' | 'baselines';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'generate',  label: 'Secure Score' },
+  { id: 'baselines',  label: 'Baselines' },
   { id: 'deployment', label: 'Deployment' },
   { id: 'sentinel',   label: 'Sentinel' },
   { id: 'email',     label: 'Email Template' },
@@ -69,6 +71,10 @@ export default function App() {
     generate: {
       title: 'Secure Score Implementation Assistant',
       sub: 'Generate Intune, GPO, Entra ID and PowerShell implementation guides for any Microsoft Defender Secure Score recommendation.',
+    },
+    baselines: {
+      title: 'MXDR Baseline Configuration Guide',
+      sub: 'Mandatory security and compliance standards for all customer environments. Includes interactive checklists and PDF export.',
     },
     sentinel: {
       title: 'Microsoft Sentinel How-To Guides',
@@ -200,6 +206,7 @@ export default function App() {
             onPendingQueryConsumed={() => setPendingQuery(null)}
           />
         )}
+        {tab === 'baselines'  && <BaselinesPage />}
         {tab === 'sentinel'   && <SentinelPage />}
         {tab === 'deployment' && <DeploymentPage />}
         {tab === 'email'     && <EmailTemplatePage result={current} />}
