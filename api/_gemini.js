@@ -24,15 +24,12 @@ function repairJSON(raw) {
 }
 
 async function callGemini(prompt, systemPrompt, maxTokens) {
-  // Each model has its own independent rate limit quota.
-  // Strategy: try each model, on 429 move immediately to the next one.
-  // If all are rate-limited, do one short wait then cycle through again.
+  // Only verified working models on v1beta free tier
   const models = [
     'gemini-1.5-flash',
     'gemini-2.0-flash-lite',
     'gemini-2.0-flash',
-    'gemini-2.0-flash-001',
-    'gemini-1.5-flash-002',
+    'gemini-1.5-flash-latest',
   ];
 
   const isRateLimit = (msg) =>
@@ -43,16 +40,16 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
     msg.includes('503') || msg.includes('overloaded') ||
     msg.includes('high demand') || msg.includes('Service Unavailable');
 
-  const is404 = (msg) =>
-    msg.includes('404') || msg.includes('not found') || msg.includes('deprecated');
+  const isNotFound = (msg) =>
+    msg.includes('404') || msg.includes('not found') ||
+    msg.includes('not supported') || msg.includes('deprecated');
 
   let lastError = null;
 
-  // Two full passes through all models
+  // Two full passes — on second pass wait 12s first to let quota refresh
   for (let pass = 0; pass < 2; pass++) {
-    // Brief wait between passes to let quota refresh slightly
     if (pass === 1) {
-      console.log('All models rate-limited on pass 1, waiting 12s before retry...');
+      console.log('All models rate-limited, waiting 12s before second pass...');
       await sleep(12000);
     }
 
@@ -75,24 +72,20 @@ async function callGemini(prompt, systemPrompt, maxTokens) {
         lastError = err;
         const msg = err.message || '';
 
-        if (is404(msg)) {
-          console.log(`${modelName} unavailable/deprecated, skipping`);
+        if (isNotFound(msg)) {
+          console.log(`${modelName} not found, skipping`);
           continue;
         }
-
         if (isRateLimit(msg) || isOverload(msg)) {
-          // Move immediately to next model — no wait between models
-          console.log(`${modelName} rate-limited, trying next model immediately`);
+          console.log(`${modelName} rate-limited, trying next`);
           continue;
         }
-
-        // Non-retryable (bad request, auth, parse error) — throw immediately
+        // Any other error — throw immediately
         throw err;
       }
     }
   }
 
-  // All models exhausted across both passes
   const msg = lastError?.message || '';
   if (isRateLimit(msg)) throw new Error('RATE_LIMIT');
   if (isOverload(msg)) throw new Error('OVERLOADED');
