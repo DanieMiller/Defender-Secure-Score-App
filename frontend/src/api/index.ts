@@ -7,10 +7,7 @@ function getToken(): string {
 }
 
 function authHeaders(): Record<string, string> {
-  return {
-    'Content-Type': 'application/json',
-    'x-auth-token': getToken(),
-  };
+  return { 'Content-Type': 'application/json', 'x-auth-token': getToken() };
 }
 
 export interface GenerateResponse {
@@ -25,7 +22,12 @@ export async function generateGuide(query: string): Promise<GenerateResponse> {
     body: JSON.stringify({ query }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+  if (!res.ok) {
+    // Surface specific error types to the frontend
+    if (res.status === 429 || data.error === 'RATE_LIMIT') throw new Error('RATE_LIMIT');
+    if (res.status === 503 || data.error === 'OVERLOADED') throw new Error('OVERLOADED');
+    throw new Error(data.error || `Server error ${res.status}`);
+  }
   return { result: data.result as GuideResult, cached: data.cached === true };
 }
 
@@ -37,6 +39,10 @@ export async function generateScripts(query: string): Promise<ScriptsResult> {
     body: JSON.stringify({ query, includeScripts: true }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+  if (!res.ok) {
+    if (res.status === 429 || data.error === 'RATE_LIMIT') throw new Error('RATE_LIMIT');
+    if (res.status === 503 || data.error === 'OVERLOADED') throw new Error('OVERLOADED');
+    throw new Error(data.error || `Server error ${res.status}`);
+  }
   return data.scripts as ScriptsResult;
 }
