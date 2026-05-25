@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { CheckSquare, Square, Download, User, Building, Calendar, Shield, Monitor, Cloud, CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckSquare, Square, Download, User, Building, Calendar, CheckCircle } from 'lucide-react';
+import { BASELINE_PAGES } from '../data/baselinePages';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface CheckItem {
@@ -14,50 +15,6 @@ interface CheckSection {
 }
 
 // ── Document content ───────────────────────────────────────────────────────
-const ENTRA_ITEMS = [
-  'User risk CA Policy',
-  'Sign in risk CA policy',
-  'Enforce MFA for all users CA policy',
-  'Enforce MFA for Admin accounts',
-  'Block risky countries CA policy',
-  'Block Legacy Authentication CA policy',
-  'Ensure customer has correct and enough licences',
-];
-
-const ENTRA_NOTE = 'On all Conditional Access policies, ensure everyone is included and only specific users are excluded (i.e. break-glass accounts and service accounts).';
-
-const DEFENDER_ITEMS = [
-  'Settings – Endpoints – Advanced features',
-  'Settings – Endpoints – Device groups (always split Endpoints and Servers for better reporting)',
-  'Make sure Remediation is set to "Full Remediation"',
-  'Web content filtering policy in place',
-  'DFO policies set up correctly: Anti-Phishing',
-  'DFO policies set up correctly: Anti-Malware',
-  'DFO policies set up correctly: Safe Attachments',
-  'DFO policies set up correctly: Safe Links',
-];
-
-const INTUNE_ITEMS = [
-  'DFE initial setup completed',
-  'Device cleanup rules are in place',
-  'EDR policy in place for Defender auto-enrollment',
-  'AV policy in place and correctly configured',
-  'ASR rules policy created with all rules in "AUDIT" mode',
-  'Ensure Automatic Enrollment is correctly set up',
-  'Connectors and tokens are turned on',
-];
-
-const POST_BASELINE_ITEMS = [
-  'Firewall policy created (customer-specific)',
-  'Phishing Resistant MFA for Admins',
-  'MFA for External users',
-  'Compliance policies deployed',
-  'CA policy to only allow access if device is compliant',
-  'Separate admin and user accounts configured',
-  'PIM (Privileged Identity Management) enabled',
-  'Update rings and Update policies configured',
-];
-
 const CHECKLIST1: CheckSection = {
   id: 'cl1',
   title: 'Checklist 1 — Baseline Checks',
@@ -103,33 +60,6 @@ const CHECKLIST2: CheckSection = {
     { id: 'c2_08', label: 'Update policies and update rings' },
   ],
 };
-
-// ── Bullet list component ──────────────────────────────────────────────────
-function BulletList({ items, color = '#d9861c' }: { items: string[]; color?: string }) {
-  return (
-    <ul className="space-y-2 mt-3">
-      {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 items-start text-sm" style={{ color: 'var(--text2)' }}>
-          <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
-          <span className="leading-relaxed">{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-// ── Section header ─────────────────────────────────────────────────────────
-function SectionHeader({ icon, title, color }: { icon: React.ReactNode; title: string; color: string }) {
-  return (
-    <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: `2px solid ${color}` }}>
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: `${color}20`, color }}>
-        {icon}
-      </div>
-      <h2 className="text-base font-bold" style={{ color: 'var(--text)' }}>{title}</h2>
-    </div>
-  );
-}
 
 // ── Checklist component ────────────────────────────────────────────────────
 function Checklist({
@@ -289,62 +219,30 @@ export function BaselinesPage() {
 
       {/* ── GUIDE TAB ── */}
       {tab === 'guide' && (
-        <div className="space-y-6">
+        <div className="space-y-3">
+          <div className="text-[10px] font-mono uppercase tracking-widest px-1 mb-2" style={{ color: 'var(--text3)' }}>
+            MXDR Baseline Configuration Guide · 22 pages · Click any page to open full size
+          </div>
 
-          {/* Title card */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-            <div className="px-6 py-5" style={{ background: '#1A1C24', borderBottom: '3px solid #d9861c' }}>
-              <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: '#d9861c' }}>
-                MXDR · BUI Security
+          {BASELINE_PAGES.map((src, i) => (
+            <div key={i} className="rounded-xl overflow-hidden shadow-sm" style={{ border: '1px solid var(--border)' }}>
+              <div className="px-3 py-1.5 flex items-center justify-between"
+                style={{ background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+                <span className="text-[10px] font-mono" style={{ color: 'var(--text3)' }}>
+                  Page {i + 1} of 22
+                </span>
+                <a href={src} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] transition-colors" style={{ color: 'var(--acc)' }}>
+                  Open full size ↗
+                </a>
               </div>
-              <h1 className="text-xl font-bold text-white mb-1">Baseline Configuration Guide</h1>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                Intune | Defender | Entra ID
-              </p>
-              <div className="mt-3 text-xs px-3 py-2 rounded-lg inline-block font-semibold"
-                style={{ background: 'rgba(217,134,28,0.2)', color: '#d9861c', border: '1px solid rgba(217,134,28,0.3)' }}>
-                Mandatory Security & Compliance Standards for All Customer Environments
-              </div>
+              <a href={src} target="_blank" rel="noopener noreferrer">
+                <img src={src} alt={`Baseline Configuration Guide - Page ${i + 1}`}
+                  className="w-full block" loading="lazy" />
+              </a>
             </div>
-          </div>
+          ))}
 
-          {/* Entra section */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-            <SectionHeader icon={<Shield size={16} />} title="ENTRA" color="#0ea5e9" />
-            <BulletList items={ENTRA_ITEMS} color="#0ea5e9" />
-            <div className="flex gap-2 mt-4 p-3 rounded-lg" style={{ background: 'rgba(217,134,28,0.08)', border: '1px solid rgba(217,134,28,0.2)' }}>
-              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" style={{ color: '#d9861c' }} />
-              <p className="text-xs leading-relaxed" style={{ color: '#d9861c' }}>
-                <strong>NB:</strong> {ENTRA_NOTE}
-              </p>
-            </div>
-          </div>
-
-          {/* Defender section */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-            <SectionHeader icon={<Shield size={16} />} title="DEFENDER" color="#ef4444" />
-            <BulletList items={DEFENDER_ITEMS} color="#ef4444" />
-          </div>
-
-          {/* Intune section */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-            <SectionHeader icon={<Monitor size={16} />} title="INTUNE" color="#10b981" />
-            <BulletList items={INTUNE_ITEMS} color="#10b981" />
-          </div>
-
-          {/* Post-baseline section */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-            <SectionHeader icon={<Cloud size={16} />} title="POLICIES TO GET IN PLACE AFTER BASELINE CHECK" color="#8b5cf6" />
-            <div className="flex gap-2 mb-3 p-2.5 rounded-lg" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
-              <AlertTriangle size={12} className="flex-shrink-0 mt-0.5" style={{ color: '#8b5cf6' }} />
-              <p className="text-xs" style={{ color: '#8b5cf6' }}>
-                Please ensure proper testing is done before implementation to the whole environment.
-              </p>
-            </div>
-            <BulletList items={POST_BASELINE_ITEMS} color="#8b5cf6" />
-          </div>
-
-          {/* CTA */}
           <div className="text-center py-4">
             <button onClick={() => setTab('checklist')}
               className="font-semibold text-sm px-6 py-3 rounded-xl text-white transition-colors"
