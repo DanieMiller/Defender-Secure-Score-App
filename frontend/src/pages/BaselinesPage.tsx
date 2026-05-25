@@ -118,22 +118,36 @@ function Checklist({
 
 // ── Print styles injected into page ───────────────────────────────────────
 const PRINT_STYLE = `
-@media print {
-  body * { visibility: hidden !important; }
-  #baseline-print-area, #baseline-print-area * { visibility: visible !important; }
-  #baseline-print-area { position: fixed; left: 0; top: 0; width: 100%; padding: 24px; background: white !important; color: black !important; font-family: Arial, sans-serif; font-size: 11pt; }
-  .no-print { display: none !important; }
-  .print-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  .print-table th { background: #f0f0f0; padding: 6px 10px; text-align: left; border: 1px solid #ccc; font-size: 10pt; }
-  .print-table td { padding: 5px 10px; border: 1px solid #ccc; font-size: 10pt; }
-  .print-section-header { background: #1A1C24; color: white; padding: 6px 10px; margin: 12px 0 4px; font-size: 11pt; font-weight: bold; }
-  .print-title { font-size: 18pt; font-weight: bold; border-bottom: 3px solid #d9861c; padding-bottom: 8px; margin-bottom: 16px; }
-  .print-meta { display: flex; gap: 32px; margin-bottom: 16px; font-size: 10pt; }
-  .print-meta span { color: #444; }
-  .print-meta b { color: black; }
-  .page-break { page-break-before: always; }
+#baseline-print-area {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
 }
-`;
+@media print {
+  body > * { display: none !important; }
+  #baseline-print-area {
+    display: block !important;
+    position: static !important;
+    left: 0 !important;
+    width: 100% !important;
+    padding: 20px !important;
+    background: white !important;
+    color: black !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 11pt !important;
+  }
+  .print-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .print-table th { background: #e0e0e0 !important; padding: 6px 10px; text-align: left; border: 1px solid #999; font-size: 10pt; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-table td { padding: 5px 10px; border: 1px solid #ccc; font-size: 10pt; }
+  .print-section-header { background: #1A1C24 !important; color: white !important; padding: 8px 12px; margin: 16px 0 4px; font-size: 11pt; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-title { font-size: 18pt; font-weight: bold; border-bottom: 3px solid #d9861c; padding-bottom: 8px; margin-bottom: 16px; }
+  .page-break { page-break-before: always; }
+  .print-compliant { color: #166534 !important; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-pending { color: #991b1b !important; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-row-done { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-row-pending { background: #fff7f7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}`
 
 // ── Main page ──────────────────────────────────────────────────────────────
 export function BaselinesPage() {
@@ -383,18 +397,18 @@ export function BaselinesPage() {
       )}
 
       {/* ── PRINT AREA (hidden except when printing) ── */}
-      <div id="baseline-print-area" ref={printAreaRef} style={{ display: 'none' }}>
+      <div id="baseline-print-area" ref={printAreaRef}>
         {/* This is shown only during print */}
         <div className="print-title">
           BUI MXDR — Baseline Configuration Assessment
         </div>
 
-        <div className="print-meta">
-          <span><b>Consultant:</b> {consultantName || '—'}</span>
-          <span><b>Customer:</b> {customerName || '—'}</span>
-          <span><b>Date:</b> {formatDate(date)}</span>
-          <span><b>Score:</b> {totalDone}/{totalItems} ({totalPct}%)</span>
-        </div>
+        <table className="print-table" style={{marginBottom: '16px'}}>
+          <tbody>
+            <tr><td style={{fontWeight:'bold', width:'140px', background:'#f5f5f5'}}>Consultant</td><td>{consultantName || '—'}</td><td style={{fontWeight:'bold', width:'100px', background:'#f5f5f5'}}>Customer</td><td>{customerName || '—'}</td></tr>
+            <tr><td style={{fontWeight:'bold', background:'#f5f5f5'}}>Date</td><td>{formatDate(date)}</td><td style={{fontWeight:'bold', background:'#f5f5f5'}}>Score</td><td>{totalDone}/{totalItems} ({totalPct}%)</td></tr>
+          </tbody>
+        </table>
 
         {/* Checklist 1 */}
         <div className="print-section-header">CHECKLIST 1 — BASELINE CHECKS</div>
@@ -408,9 +422,9 @@ export function BaselinesPage() {
           </thead>
           <tbody>
             {CHECKLIST1.items.map((item, idx) => (
-              <tr key={item.id} style={{ background: checked.has(item.id) ? '#f0fdf4' : '#fff8f7' }}>
+              <tr key={item.id} className={checked.has(item.id) ? 'print-row-done' : 'print-row-pending'}>
                 <td>{idx + 1}. {item.label}</td>
-                <td style={{ textAlign: 'center', fontWeight: 'bold', color: checked.has(item.id) ? '#15803d' : '#b91c1c' }}>
+                <td className={checked.has(item.id) ? 'print-compliant' : 'print-pending'} style={{textAlign:'center'}}>
                   {checked.has(item.id) ? '✓ DONE' : '✗ PENDING'}
                 </td>
                 <td></td>
@@ -433,9 +447,9 @@ export function BaselinesPage() {
           </thead>
           <tbody>
             {CHECKLIST2.items.map((item, idx) => (
-              <tr key={item.id} style={{ background: checked.has(item.id) ? '#f0fdf4' : '#fff8f7' }}>
+              <tr key={item.id} className={checked.has(item.id) ? 'print-row-done' : 'print-row-pending'}>
                 <td>{idx + 1}. {item.label}</td>
-                <td style={{ textAlign: 'center', fontWeight: 'bold', color: checked.has(item.id) ? '#15803d' : '#b91c1c' }}>
+                <td className={checked.has(item.id) ? 'print-compliant' : 'print-pending'} style={{textAlign:'center'}}>
                   {checked.has(item.id) ? '✓ DONE' : '✗ PENDING'}
                 </td>
                 <td></td>
